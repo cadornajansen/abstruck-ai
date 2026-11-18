@@ -1,0 +1,30 @@
+{
+  "name": "@workspace/worker",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "dev": "pnpm build && node --watch --env-file=../web/.env.local dist/jobs.js --watch",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "pnpm build && node --test test/*.test.mjs",
+    "capabilities": "node dist/cli.js capabilities",
+    "probe:youtube": "node dist/cli.js youtube",
+    "probe:document": "node dist/cli.js document",
+    "jobs:once": "node --env-file=../web/.env.local dist/jobs.js --once",
+    "jobs:watch": "node --env-file=../web/.env.local dist/jobs.js --watch"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@workspace/typescript-config": "workspace:*",
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "3.1161.0",
+    "@aws-sdk/s3-request-presigner": "3.1161.0",
+    "@supabase/supabase-js": "2.118.0"
+  }
+}

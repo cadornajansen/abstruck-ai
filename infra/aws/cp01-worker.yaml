@@ -1,0 +1,172 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Abstruck CP-01 one-shot worker preparation. Creates no running task or ECS service.
+Parameters:
+  Owner:
+    Type: String
+    Default: cadornajansen
+    AllowedPattern: '[A-Za-z0-9_.-]{1,64}'
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: Existing verified VPC. This template does not create networks.
+  ImageDigest:
+    Type: String
+    Default: ''
+    AllowedPattern: '^$|^sha256:[a-f0-9]{64}$'
+    Description: Leave empty for bootstrap; set to an actual digest in this stack's ECR repository later.
+Conditions:
+  HasImage:
+    Fn::Not:
+      - Fn::Equals: [{Ref: ImageDigest}, '']
+Resources:
+  WorkerRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      ImageTagMutability: IMMUTABLE
+      EmptyOnDelete: false
+      EncryptionConfiguration:
+        EncryptionType: AES256
+      LifecyclePolicy:
+        LifecyclePolicyText: >-
+          {"rules":[{"rulePriority":1,"description":"Expire untagged CP-01 images after one day","selection":{"tagStatus":"untagged","countType":"sinceImagePushed","countUnit":"days","countNumber":1},"action":{"type":"expire"}}]}
+      Tags:
+        - {Key: Project, Value: abstruck}
+        - {Key: Owner, Value: {Ref: Owner}}
+        - {Key: Checkpoint, Value: CP-01}
+  WorkerCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterSettings:
+        - {Name: containerInsights, Value: disabled}
+      Tags:
+        - {Key: Project, Value: abstruck}
+        - {Key: Owner, Value: {Ref: Owner}}
+        - {Key: Checkpoint, Value: CP-01}
+  WorkerLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      RetentionInDays: 7
+      Tags:
+        - {Key: Project, Value: abstruck}
+        - {Key: Owner, Value: {Ref: Owner}}
+        - {Key: Checkpoint, Value: CP-01}
+  WorkerExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                aws:SourceAccount: {Ref: 'AWS::AccountId'}
+              ArnLike:
+                aws:SourceArn:
+                  Fn::Sub: 'arn:${AWS::Partition}:ecs:${AWS::Region}:${AWS::AccountId}:*'
+      Policies:
+        - PolicyName: PullThisImageAndWriteTheseLogs
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: EcrAuthentication
+                Effect: Allow
+                Action: ecr:GetAuthorizationToken
+                Resource: '*'
+              - Sid: PullOnlyThisRepository
+                Effect: Allow
+                Action:
+                  - ecr:BatchGetImage
+                  - ecr:GetDownloadUrlForLayer
+                Resource:
+                  Fn::GetAtt: [WorkerRepository, Arn]
+              - Sid: WriteOnlyThisLogGroup
+                Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource:
+                  Fn::Sub: 'arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:${WorkerLogs}:log-stream:*'
+      Tags:
+        - {Key: Project, Value: abstruck}
+        - {Key: Owner, Value: {Ref: Owner}}
+        - {Key: Checkpoint, Value: CP-01}
+  WorkerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Abstruck CP-01 - no inbound access; outbound HTTPS only
+      VpcId: {Ref: VpcId}
+      SecurityGroupIngress: []
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+          Description: ECR image pull, CloudWatch Logs and approved public video probe
+      Tags:
+        - {Key: Project, Value: abstruck}
+        - {Key: Owner, Value: {Ref: Owner}}
+        - {Key: Checkpoint, Value: CP-01}
+  WorkerTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Condition: HasImage
+    Properties:
+      Family:
+        Fn::Sub: '${AWS::StackName}-worker'
+      RequiresCompatibilities: [FARGATE]
+      NetworkMode: awsvpc
+      Cpu: '512'
+      Memory: '1024'
+      RuntimePlatform:
+        CpuArchitecture: X86_64
+        OperatingSystemFamily: LINUX
+      ExecutionRoleArn:
+        Fn::GetAtt: [WorkerExecutionRole, Arn]
+      # No TaskRoleArn: application code has no AWS API permissions.
+      ContainerDefinitions:
+        - Name: worker
+          Image:
+            Fn::Sub: '${WorkerRepository.RepositoryUri}@${ImageDigest}'
+          Essential: true
+          User: '1000:1000'
+          # The existing CLI writes isolated scratch/profiles under /tmp.
+          ReadonlyRootFilesystem: false
+          LinuxParameters:
+            InitProcessEnabled: true
+            Capabilities:
+              Drop: [ALL]
+          Command: [node, dist/cli.js, capabilities]
+          StopTimeout: 30
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: {Ref: WorkerLogs}
+              awslogs-region: {Ref: 'AWS::Region'}
+              awslogs-stream-prefix: cp01
+              mode: blocking
+      Tags:
+        - {Key: Project, Value: abstruck}
+        - {Key: Owner, Value: {Ref: Owner}}
+        - {Key: Checkpoint, Value: CP-01}
+Outputs:
+  RepositoryName:
+    Value: {Ref: WorkerRepository}
+  RepositoryUri:
+    Value:
+      Fn::GetAtt: [WorkerRepository, RepositoryUri]
+  ClusterArn:
+    Value:
+      Fn::GetAtt: [WorkerCluster, Arn]
+  LogGroupName:
+    Value: {Ref: WorkerLogs}
+  ExecutionRoleArn:
+    Value:
+      Fn::GetAtt: [WorkerExecutionRole, Arn]
+  SecurityGroupId:
+    Value:
+      Fn::GetAtt: [WorkerSecurityGroup, GroupId]
+  TaskDefinitionArn:
+    Condition: HasImage
+    Value: {Ref: WorkerTaskDefinition}
+

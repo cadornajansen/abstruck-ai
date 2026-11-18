@@ -1,0 +1,118 @@
+import {
+  Book,
+  OpenBook,
+  Journal,
+  Notes,
+  Folder,
+  Flask,
+  Atom,
+  Brain,
+  Calculator,
+  Code,
+  Globe,
+  MusicNote,
+  Play,
+  GraduationCap,
+  DesignPencil,
+  Camera,
+  Clock,
+  LightBulb,
+  SunLight,
+  Leaf,
+  Heart,
+  Star,
+  Rocket,
+  Language,
+  MathBook,
+  Translate,
+  Computer,
+  GraphUp,
+  Tree,
+  Database,
+  Settings,
+  Network,
+  Palette,
+  Calendar,
+  BookStack,
+  Bank,
+  Medal,
+  Puzzle,
+  WhiteFlag,
+  Gym,
+  ElectronicsChip,
+  City,
+  Building,
+  CodeBrackets,
+  Page,
+  Headset,
+  Emoji,
+} from "iconoir-react"
+import { cn } from "@workspace/ui/lib/utils"
+import type { SpaceAppearance, SpaceIconName } from "@/lib/space-appearance"
+
+const icons = {
+  Book,
+  OpenBook,
+  Journal,
+  Notes,
+  Folder,
+  Flask,
+  Atom,
+  Brain,
+  Calculator,
+  Code,
+  Globe,
+  MusicNote,
+  Play,
+  GraduationCap,
+  DesignPencil,
+  Camera,
+  Clock,
+  LightBulb,
+  SunLight,
+  Leaf,
+  Heart,
+  Star,
+  Rocket,
+  Language,
+  MathBook,
+  Translate,
+  Computer,
+  GraphUp,
+  Tree,
+  Database,
+  Settings,
+  Network,
+  Palette,
+  Calendar,
+  BookStack,
+  Bank,
+  Medal,
+  Puzzle,
+  WhiteFlag,
+  Gym,
+  ElectronicsChip,
+  City,
+  Building,
+  CodeBrackets,
+  Page,
+  Headset,
+  Emoji,
+} satisfies Record<SpaceIconName, typeof Folder>
+
+export function SpaceIcon({
+  space,
+  className,
+}: {
+  space: SpaceAppearance
+  className?: string
+}) {
+  const Icon = space.iconName ? (icons[space.iconName] ?? Folder) : Folder
+  return (
+    <Icon
+      aria-hidden="true"
+      className={cn("shrink-0", className)}
+      color={space.iconName ? (space.iconColor ?? undefined) : undefined}
+    />
+  )
+}
