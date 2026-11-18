@@ -1,19 +1,25 @@
 import { marketingMetadata } from "@/components/marketing/metadata"
 import Link from "next/link"
+import { isProductionRelease, workspaceHref } from "@/lib/release"
 import { PublicPage, PublicSection } from "@/components/public-page"
 
 export const metadata = marketingMetadata(
   "Privacy",
-  "How the Abstruck development study workspace processes account data, materials, study activity, sharing and deletion requests.",
+  "How the Abstruck study workspace processes account data, materials, study activity, sharing and deletion requests.",
   "/privacy"
 )
 
 export default function PrivacyPage() {
+  const beta = isProductionRelease()
   return (
     <PublicPage
       active="privacy"
       title="Privacy notice"
-      description="This notice describes the current Abstruck development MVP. Public launch, final retention schedules and wider operational validation are still pending. Updated November 3, 2026."
+      description={
+        beta
+          ? "This notice describes how the Abstruck public beta handles your data. Updated November 18, 2026."
+          : "This notice describes the current Abstruck development MVP. Public launch, final retention schedules and wider operational validation are still pending. Updated November 3, 2026."
+      }
     >
       <div className="flex max-w-3xl flex-col gap-8">
         <PublicSection title="Data used by your workspace">
@@ -25,8 +31,10 @@ export default function PrivacyPage() {
             review progress.
           </p>
           <p>
-            It also records usage, job and error states, order/payment
-            references, access periods, sharing settings and support requests.
+            It also records usage, processing status and errors, access periods,
+            sharing settings and support requests.
+            {!beta &&
+              " The development workspace also records test payment references."}
             Authentication uses cookies, and the interface stores some local
             display preferences, such as the selected list or grid view.
           </p>
@@ -68,17 +76,20 @@ export default function PrivacyPage() {
               request includes your message and the verified account reply
               address.
             </li>
-            <li>
-              <strong className="font-medium text-foreground">PayMongo</strong>{" "}
-              provides hosted QR Ph checkout and payment status. Current
-              checkout is sandbox/test mode.
-            </li>
+            {!beta && (
+              <li>
+                <strong className="font-medium text-foreground">
+                  PayMongo
+                </strong>{" "}
+                provides hosted QR Ph checkout and payment status. Current
+                checkout is sandbox/test mode.
+              </li>
+            )}
           </ul>
           <p>
-            The current system uses a development worker. Continuous production
-            hosting remains pending. Provider-managed retention and backups are
-            separate from Abstruck’s application cleanup; this MVP does not
-            promise zero provider retention.
+            {beta
+              ? "Vercel hosts the web application and AWS runs background processing. Provider-managed retention and backups are separate from Abstruck’s application cleanup."
+              : "The development worker has no continuous production hosting. Provider-managed retention and backups are separate from Abstruck’s application cleanup."}
           </p>
         </PublicSection>
         <PublicSection title="Access and sharing">
@@ -119,24 +130,26 @@ export default function PrivacyPage() {
             artifact or external copy has already been removed.
           </p>
           <p>
-            The development system retains minimal deletion receipts,
-            payment-event evidence and operations audit entries after account
-            removal. These records currently have no automated retention
-            deadline. Private cleanup payloads are cleared after successful
-            cleanup. Email already delivered to a recipient or provider cannot
-            be unsent by deleting the account.
+            Abstruck retains minimal deletion receipts and operations audit
+            entries after account removal.
+            {!beta &&
+              " The development workspace also retains test payment-event evidence."}{" "}
+            These records currently have no automated retention deadline.
+            Private cleanup payloads are cleared after successful cleanup. Email
+            already delivered to a recipient or provider cannot be unsent by
+            deleting the account.
           </p>
         </PublicSection>
         <PublicSection title="Current limits and questions">
           <p>
-            Broader provider-cleanup recovery, retention scheduling and backup
-            restoration remain under validation. This notice does not claim that
-            those operational checks or public-launch readiness are complete.
+            Some data can remain in backups or service providers after
+            application cleanup. Retention and provider cleanup procedures are
+            still being validated.
           </p>
           <p>
             Use{" "}
             <Link
-              href="/support"
+              href={workspaceHref("/support")}
               prefetch={false}
               className="text-foreground underline underline-offset-4"
             >
@@ -150,7 +163,7 @@ export default function PrivacyPage() {
             >
               Terms
             </Link>{" "}
-            describe use of this development workspace.
+            describe use of the workspace.
           </p>
         </PublicSection>
       </div>

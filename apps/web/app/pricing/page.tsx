@@ -1,3 +1,4 @@
+import { isProductionRelease, workspaceHref } from "@/lib/release"
 import { marketingMetadata } from "@/components/marketing/metadata"
 import Link from "next/link"
 import { Check } from "iconoir-react"
@@ -19,7 +20,7 @@ import { PublicPage, PublicSection } from "@/components/public-page"
 
 export const metadata = marketingMetadata(
   "Pricing",
-  "Free and ₱199 per 30 days for Abstruck’s study workspace. Development allowances remain provisional.",
+  "Study with Abstruck for free. See the available tools and usage allowances.",
   "/pricing"
 )
 
@@ -53,22 +54,30 @@ const plans = [
 ] as const
 
 export default function PricingPage() {
+  const beta = isProductionRelease()
+  const availablePlans = beta ? plans.slice(0, 1) : plans
   return (
     <PublicPage
       active="pricing"
       title="Start free. Find your pace."
-      description="Bring your materials, understand them, practise and return to review. Free and Paid include the same supported tools with different usage allowances."
+      description={
+        beta
+          ? "Bring your materials, understand them, practise and return to review. The public beta is free."
+          : "Bring your materials, understand them, practise and return to review. Free and Paid include the same supported tools with different usage allowances."
+      }
     >
-      <Alert className="rounded-2xl">
-        <AlertTitle>Development pricing</AlertTitle>
-        <AlertDescription>
-          Checkout currently uses sandbox/test mode. Public launch and live
-          customer payments are pending. Allowances are provisional and subject
-          to validation before launch.
-        </AlertDescription>
-      </Alert>
-      <div className="grid gap-5 sm:grid-cols-2">
-        {plans.map((plan) => (
+      {!beta && (
+        <Alert className="rounded-2xl">
+          <AlertTitle>Development pricing</AlertTitle>
+          <AlertDescription>
+            Checkout currently uses sandbox/test mode. Public launch and live
+            customer payments are pending. Allowances are provisional and
+            subject to validation before launch.
+          </AlertDescription>
+        </Alert>
+      )}
+      <div className={beta ? "max-w-sm" : "grid gap-5 sm:grid-cols-2"}>
+        {availablePlans.map((plan) => (
           <Card
             key={plan.name}
             className="rounded-3xl py-8 shadow-none [--card-spacing:--spacing(8)]"
@@ -101,7 +110,9 @@ export default function PricingPage() {
             <CardFooter className="mt-auto border-0 bg-transparent pt-0">
               <Button
                 variant={plan.name === "Free" ? "default" : "outline"}
-                render={<Link href={plan.href} prefetch={false} />}
+                render={
+                  <Link href={workspaceHref(plan.href)} prefetch={false} />
+                }
                 nativeButton={false}
                 className="h-11 w-full rounded-full"
               >
@@ -127,25 +138,27 @@ export default function PricingPage() {
             study sets. Processing concurrency is also limited.
           </p>
           <p>
-            Numeric allowances are being validated. View the current development
-            limits, remaining usage and period dates in Settings → Plan &amp;
-            Billing after signing in.
+            View current limits, remaining usage and period dates in Settings →
+            Plan &amp; Billing after signing in.
           </p>
         </PublicSection>
-        <div id="renewal" className="scroll-mt-28">
-          <PublicSection title="Renew when you choose">
-            <p>
-              Paid access lasts 30 days per verified payment. Each QR Ph payment
-              is initiated by you; there is no automatic debit. An early renewal
-              adds a future 30-day period after your existing paid access.
-            </p>
-            <p>
-              When Paid access ends, the account returns to Free. Saved study
-              work remains available, while new uploads are paused if retained
-              files exceed the Free storage limit.
-            </p>
-          </PublicSection>
-        </div>
+        {!beta && (
+          <div id="renewal" className="scroll-mt-28">
+            <PublicSection title="Renew when you choose">
+              <p>
+                Paid access lasts 30 days per verified payment. Each QR Ph
+                payment is initiated by you; there is no automatic debit. An
+                early renewal adds a future 30-day period after your existing
+                paid access.
+              </p>
+              <p>
+                When Paid access ends, the account returns to Free. Saved study
+                work remains available, while new uploads are paused if retained
+                files exceed the Free storage limit.
+              </p>
+            </PublicSection>
+          </div>
+        )}
       </div>
     </PublicPage>
   )

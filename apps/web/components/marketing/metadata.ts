@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { MARKETING_ORIGIN } from "@/lib/release"
 
 // Keep local development notices out of search until the launch owner approves indexing.
 export function marketingMetadata(
@@ -6,7 +7,7 @@ export function marketingMetadata(
   description: string,
   path: string
 ): Metadata {
-  const url = `https://abstruck.space${path}`
+  const url = `${MARKETING_ORIGIN}${path}`
   return {
     title: `${title} · Abstruck`,
     description,
@@ -18,7 +19,7 @@ export function marketingMetadata(
       url,
       siteName: "Abstruck",
       type: "website",
-      images: [{ url: "https://abstruck.space/icon.png", alt: "Abstruck" }],
+      images: [{ url: `${MARKETING_ORIGIN}/icon.png`, alt: "Abstruck" }],
     },
     twitter: { card: "summary", title, description },
   }

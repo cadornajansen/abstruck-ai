@@ -1,0 +1,318 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Abstruck production queue worker and encrypted backup on the existing Fargate cluster.
+Metadata:
+  com.aws.cloudformation.Context:
+    arch: Reuse the CP-01 cluster, ECR repository and public subnet routes.
+    must:
+      - Run digest-pinned images with no inbound connections.
+      - Keep database credentials and the encryption key exclusive to the backup task.
+    ref: production.md
+
+Parameters:
+  ClusterArn:
+    Type: String
+  RepositoryName:
+    Type: String
+  PublicSubnets:
+    Type: List<AWS::EC2::Subnet::Id>
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+  WorkerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup::Id
+  WorkerImageDigest:
+    Type: String
+    AllowedPattern: '^sha256:[a-f0-9]{64}$'
+  BackupImageDigest:
+    Type: String
+    AllowedPattern: '^sha256:[a-f0-9]{64}$'
+  R2AccountId:
+    Type: String
+    AllowedPattern: '^[a-f0-9]{32}$'
+  R2BucketName:
+    Type: String
+  WorkerSecretArn:
+    Type: String
+    Description: ARN of the production worker JSON secret in this region.
+  BackupSecretArn:
+    Type: String
+    Description: ARN of the production backup JSON secret in this region.
+  BackupScheduleState:
+    Type: String
+    AllowedValues: [DISABLED, ENABLED]
+    Default: DISABLED
+    Description: Enable after a manual task confirms an encrypted backup and R2 readback.
+
+Resources:
+  TaskLogs:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      LogGroupName: !Sub '/ecs/${AWS::StackName}'
+      RetentionInDays: 14
+
+  WorkerExecutionRole:
+    Type: AWS::IAM::Role
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: Give the ECS agent access to the worker provider credentials.
+        must: [The worker execution role cannot read database backup credentials.]
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: {Service: ecs-tasks.amazonaws.com}
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref 'AWS::AccountId'
+              ArnLike:
+                aws:SourceArn: !Sub 'arn:${AWS::Partition}:ecs:${AWS::Region}:${AWS::AccountId}:*'
+      Policies:
+        - PolicyName: ReadWorkerSecret
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                Resource: !Ref WorkerSecretArn
+
+  BackupExecutionRole:
+    Type: AWS::IAM::Role
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: Limit database credentials to the standalone backup task.
+        must: [The backup execution role can read only the backup secret.]
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: {Service: ecs-tasks.amazonaws.com}
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref 'AWS::AccountId'
+              ArnLike:
+                aws:SourceArn: !Sub 'arn:${AWS::Partition}:ecs:${AWS::Region}:${AWS::AccountId}:*'
+      Policies:
+        - PolicyName: ReadBackupSecret
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                Resource: !Ref BackupSecretArn
+
+  PullImagesAndWriteLogs:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: PullAbstruckImagesAndWriteTaskLogs
+      Roles: [!Ref WorkerExecutionRole, !Ref BackupExecutionRole]
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action: ecr:GetAuthorizationToken
+            Resource: '*'
+          - Effect: Allow
+            Action: [ecr:BatchCheckLayerAvailability, ecr:GetDownloadUrlForLayer, ecr:BatchGetImage]
+            Resource: !Sub 'arn:${AWS::Partition}:ecr:${AWS::Region}:${AWS::AccountId}:repository/${RepositoryName}'
+          - Effect: Allow
+            Action: [logs:CreateLogStream, logs:PutLogEvents]
+            Resource: !Sub 'arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:${TaskLogs}:log-stream:*'
+
+  WorkerTask:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: PullImagesAndWriteLogs
+    Properties:
+      Family: !Sub '${AWS::StackName}-worker'
+      RequiresCompatibilities: [FARGATE]
+      NetworkMode: awsvpc
+      Cpu: '512'
+      Memory: '1024'
+      ExecutionRoleArn: !GetAtt WorkerExecutionRole.Arn
+      RuntimePlatform: {CpuArchitecture: X86_64, OperatingSystemFamily: LINUX}
+      ContainerDefinitions:
+        - Name: worker
+          Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.${AWS::URLSuffix}/${RepositoryName}@${WorkerImageDigest}'
+          Essential: true
+          User: '1000:1000'
+          Command: [node, dist/jobs.js, --watch]
+          StopTimeout: 120
+          LinuxParameters:
+            InitProcessEnabled: true
+            Capabilities: {Drop: [ALL]}
+          Environment:
+            - {Name: SUPABASE_URL, Value: 'https://qgdbftgqiinydeeiwadg.supabase.co'}
+            - {Name: R2_ACCOUNT_ID, Value: !Ref R2AccountId}
+            - {Name: R2_BUCKET, Value: !Ref R2BucketName}
+            - {Name: NEXT_PUBLIC_APP_URL, Value: 'https://app.abstruck.space'}
+            - {Name: ASSEMBLYAI_WEBHOOK_URL, Value: 'https://app.abstruck.space/api/webhooks/assemblyai'}
+            - {Name: OPENAI_EMBEDDINGS_ENABLED, Value: 'false'}
+            - {Name: MAINTENANCE_NOTIFICATIONS_ENABLED, Value: 'false'}
+          Secrets:
+            - {Name: SUPABASE_SECRET_KEY, ValueFrom: !Sub '${WorkerSecretArn}:SUPABASE_SECRET_KEY::'}
+            - {Name: R2_ACCESS_KEY_ID, ValueFrom: !Sub '${WorkerSecretArn}:R2_ACCESS_KEY_ID::'}
+            - {Name: R2_SECRET_ACCESS_KEY, ValueFrom: !Sub '${WorkerSecretArn}:R2_SECRET_ACCESS_KEY::'}
+            - {Name: OPENAI_API_KEY, ValueFrom: !Sub '${WorkerSecretArn}:OPENAI_API_KEY::'}
+            - {Name: ASSEMBLYAI_API_KEY, ValueFrom: !Sub '${WorkerSecretArn}:ASSEMBLYAI_API_KEY::'}
+            - {Name: ASSEMBLYAI_WEBHOOK_SECRET, ValueFrom: !Sub '${WorkerSecretArn}:ASSEMBLYAI_WEBHOOK_SECRET::'}
+            - {Name: RESEND_API_KEY, ValueFrom: !Sub '${WorkerSecretArn}:RESEND_API_KEY::'}
+            - {Name: EMAIL_FROM, ValueFrom: !Sub '${WorkerSecretArn}:EMAIL_FROM::'}
+            - {Name: SUPPORT_EMAIL, ValueFrom: !Sub '${WorkerSecretArn}:SUPPORT_EMAIL::'}
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref TaskLogs
+              awslogs-region: !Ref 'AWS::Region'
+              awslogs-stream-prefix: worker
+
+  WorkerService:
+    Type: AWS::ECS::Service
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: Keep one consumer polling the durable Supabase queue.
+        must: [Use the existing security group with HTTPS egress and zero ingress.]
+    Properties:
+      Cluster: !Ref ClusterArn
+      TaskDefinition: !Ref WorkerTask
+      DesiredCount: 1
+      LaunchType: FARGATE
+      PlatformVersion: '1.4.0'
+      DeploymentConfiguration:
+        MinimumHealthyPercent: 100
+        MaximumPercent: 200
+        DeploymentCircuitBreaker: {Enable: true, Rollback: true}
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          SecurityGroups: [!Ref WorkerSecurityGroup]
+          Subnets: !Ref PublicSubnets
+
+  BackupSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: Permit the session pooler and object storage from the backup task.
+        must: [Zero inbound rules. Keep PostgreSQL egress exclusive to backup.]
+    Properties:
+      GroupDescription: Production backup with HTTPS and PostgreSQL egress
+      VpcId: !Ref VpcId
+      SecurityGroupIngress: []
+      SecurityGroupEgress:
+        - {IpProtocol: tcp, FromPort: 443, ToPort: 443, CidrIp: 0.0.0.0/0}
+        - {IpProtocol: tcp, FromPort: 5432, ToPort: 5432, CidrIp: 0.0.0.0/0}
+
+  BackupTask:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: PullImagesAndWriteLogs
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: Export an encrypted snapshot using the same TLS-verified backup script as local recovery.
+        must: [Keep the source read-only and verify the uploaded encrypted archive.]
+    Properties:
+      Family: !Sub '${AWS::StackName}-backup'
+      RequiresCompatibilities: [FARGATE]
+      NetworkMode: awsvpc
+      Cpu: '512'
+      Memory: '1024'
+      ExecutionRoleArn: !GetAtt BackupExecutionRole.Arn
+      RuntimePlatform: {CpuArchitecture: X86_64, OperatingSystemFamily: LINUX}
+      ContainerDefinitions:
+        - Name: backup
+          Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.${AWS::URLSuffix}/${RepositoryName}@${BackupImageDigest}'
+          Essential: true
+          LinuxParameters:
+            InitProcessEnabled: true
+            Capabilities: {Drop: [ALL]}
+          Environment:
+            - {Name: R2_ACCOUNT_ID, Value: !Ref R2AccountId}
+            - {Name: R2_BUCKET, Value: !Ref R2BucketName}
+          Secrets:
+            - {Name: SUPABASE_DB_URL, ValueFrom: !Sub '${BackupSecretArn}:SUPABASE_DB_URL::'}
+            - {Name: DATABASE_BACKUP_KEY, ValueFrom: !Sub '${BackupSecretArn}:DATABASE_BACKUP_KEY::'}
+            - {Name: R2_ACCESS_KEY_ID, ValueFrom: !Sub '${BackupSecretArn}:R2_ACCESS_KEY_ID::'}
+            - {Name: R2_SECRET_ACCESS_KEY, ValueFrom: !Sub '${BackupSecretArn}:R2_SECRET_ACCESS_KEY::'}
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref TaskLogs
+              awslogs-region: !Ref 'AWS::Region'
+              awslogs-stream-prefix: backup
+
+  BackupScheduleGroup:
+    Type: AWS::Scheduler::ScheduleGroup
+    Properties:
+      Name: !Sub '${AWS::StackName}-backup'
+
+  BackupSchedulerRole:
+    Type: AWS::IAM::Role
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: Let this schedule start only the backup task in the existing cluster.
+        must: [Scope trust to the backup schedule group and role passing to the backup execution role.]
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: {Service: scheduler.amazonaws.com}
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref 'AWS::AccountId'
+                aws:SourceArn: !GetAtt BackupScheduleGroup.Arn
+      Policies:
+        - PolicyName: RunAbstruckBackup
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: ecs:RunTask
+                Resource: !Ref BackupTask
+                Condition:
+                  ArnEquals:
+                    ecs:cluster: !Ref ClusterArn
+              - Effect: Allow
+                Action: iam:PassRole
+                Resource: !GetAtt BackupExecutionRole.Arn
+                Condition:
+                  StringEquals:
+                    iam:PassedToService: ecs-tasks.amazonaws.com
+
+  DailyBackup:
+    Type: AWS::Scheduler::Schedule
+    Properties:
+      GroupName: !Ref BackupScheduleGroup
+      Name: encrypted-database-backup
+      State: !Ref BackupScheduleState
+      ScheduleExpression: 'cron(0 2 * * ? *)'
+      ScheduleExpressionTimezone: Asia/Manila
+      FlexibleTimeWindow: {Mode: 'OFF'}
+      Target:
+        Arn: !Ref ClusterArn
+        RoleArn: !GetAtt BackupSchedulerRole.Arn
+        RetryPolicy:
+          MaximumRetryAttempts: 0
+        EcsParameters:
+          TaskDefinitionArn: !Ref BackupTask
+          LaunchType: FARGATE
+          PlatformVersion: '1.4.0'
+          TaskCount: 1
+          NetworkConfiguration:
+            AwsvpcConfiguration:
+              AssignPublicIp: ENABLED
+              SecurityGroups: [!Ref BackupSecurityGroup]
+              Subnets: !Ref PublicSubnets
+
+Outputs:
+  WorkerServiceName:
+    Value: !GetAtt WorkerService.Name
+  BackupTaskArn:
+    Value: !Ref BackupTask
+  BackupSecurityGroupId:
+    Value: !GetAtt BackupSecurityGroup.GroupId
+  LogGroupName:
+    Value: !Ref TaskLogs

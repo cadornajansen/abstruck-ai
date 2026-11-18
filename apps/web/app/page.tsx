@@ -6,6 +6,12 @@ import { getSpaces } from "@/lib/spaces"
 import { getProfile } from "@/lib/profile"
 import { getRecentMaterials } from "@/lib/library"
 import { redirect } from "next/navigation"
+import { headers } from "next/headers"
+import {
+  APP_HOSTNAME,
+  MARKETING_HOSTNAME,
+  isProductionRelease,
+} from "@/lib/release"
 import { MarketingShell } from "@/components/marketing/marketing-shell"
 import { LandingContent } from "@/components/marketing/landing"
 import { marketingMetadata } from "@/components/marketing/metadata"
@@ -17,13 +23,19 @@ export const metadata = marketingMetadata(
 )
 
 export default async function Page() {
-  const user = await getCurrentUser()
-  if (!user)
+  const productionHost = isProductionRelease()
+    ? (await headers()).get("host")
+    : null
+  const user =
+    productionHost === MARKETING_HOSTNAME ? null : await getCurrentUser()
+  if (!user) {
+    if (productionHost === APP_HOSTNAME) redirect("/sign-in")
     return (
       <MarketingShell authState="guest">
         <LandingContent />
       </MarketingShell>
     )
+  }
   const profile = await getProfile(user.id)
   if (!profile?.onboarding_completed_at) redirect("/onboarding")
   const [spaces, recentMaterials] = await Promise.all([

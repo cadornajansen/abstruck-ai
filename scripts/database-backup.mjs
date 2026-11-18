@@ -53,10 +53,11 @@ const { positionals, values } = parseArgs({
 })
 const command = positionals[0]
 const envFile = join(root, "apps/web/.env.local")
-const configuration = {
-  ...parseEnv(await readFile(envFile, "utf8")),
-  ...process.env,
-}
+const localEnv = await readFile(envFile, "utf8").catch((error) => {
+  if (error.code === "ENOENT") return ""
+  throw error
+})
+const configuration = { ...parseEnv(localEnv), ...process.env }
 const pgBin =
   values["pg-bin"] ??
   configuration.PG_BIN ??

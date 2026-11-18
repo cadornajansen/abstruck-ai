@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { isProductionRelease, workspaceHref } from "@/lib/release"
 import {
   ArrowRight,
   ArrowDown,
@@ -36,7 +37,7 @@ export function StartButton({
     <Button
       size="lg"
       className="h-12 rounded-full px-7"
-      render={<Link href="/sign-up" prefetch={false} />}
+      render={<Link href={workspaceHref("/sign-up")} prefetch={false} />}
       nativeButton={false}
     >
       {children}
@@ -93,6 +94,7 @@ function HeroObjects() {
 }
 
 export function LandingContent() {
+  const beta = isProductionRelease()
   return (
     <main id="main-content" tabIndex={-1} className="outline-none">
       <section className="relative overflow-hidden bg-linear-to-b from-muted/35 to-background px-5 pt-16 pb-14 sm:pt-22 sm:pb-16">
@@ -142,24 +144,28 @@ export function LandingContent() {
             Start free. Find your pace.
           </h2>
           <p className="mt-5 text-muted-foreground">
-            The same supported tools, with different allowances.
+            {beta
+              ? "Create a free account and start studying during the beta."
+              : "The same supported tools, with different allowances."}
           </p>
         </div>
-        <PlanOverview />
-        <p className="mt-5 text-center text-xs leading-6 text-muted-foreground">
-          Development plans. Numeric allowances are being validated. Checkout
-          remains in test mode.
-        </p>
+        <PlanOverview publicBeta={beta} />
+        {!beta && (
+          <p className="mt-5 text-center text-xs leading-6 text-muted-foreground">
+            Development plans. Numeric allowances are being validated. Checkout
+            remains in test mode.
+          </p>
+        )}
         <div className="mt-6 text-center">
           <Link
             href="/pricing"
             className="rounded text-sm underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-ring"
           >
-            See plans and renewal details
+            {beta ? "See beta pricing" : "See plans and renewal details"}
           </Link>
         </div>
       </section>
-      <MarketingFaq />
+      <MarketingFaq publicBeta={beta} />
       <FinalCta />
     </main>
   )
@@ -368,42 +374,48 @@ export function FeatureStory() {
             })}
           </div>
         </div>
-        <p className="mt-6 text-xs leading-6 text-muted-foreground">
-          Current development capabilities. Public availability remains subject
-          to release validation.
-        </p>
+        {!isProductionRelease() && (
+          <p className="mt-6 text-xs leading-6 text-muted-foreground">
+            Current development capabilities. Public availability remains
+            subject to release validation.
+          </p>
+        )}
       </section>
     </div>
   )
 }
 
-export function PlanOverview() {
+function PlanOverview({ publicBeta }: { publicBeta: boolean }) {
+  const plans = [
+    {
+      name: "Free",
+      price: "₱0",
+      period: "ongoing",
+      description: "Make room for a new study routine.",
+      items: [
+        "The supported study tools",
+        "Smaller usage allowances",
+        "Manual notes and saved-work review",
+      ],
+    },
+    {
+      name: "Paid",
+      price: "₱199",
+      period: "per 30 days",
+      description: "More room for regular studying.",
+      items: [
+        "The same supported study tools",
+        "Higher usage allowances",
+        "Renew when you choose with QR Ph",
+      ],
+    },
+  ]
+  const availablePlans = publicBeta ? plans.slice(0, 1) : plans
   return (
-    <div className="grid gap-5 sm:grid-cols-2">
-      {[
-        {
-          name: "Free",
-          price: "₱0",
-          period: "ongoing",
-          description: "Make room for a new study routine.",
-          items: [
-            "The supported study tools",
-            "Smaller usage allowances",
-            "Manual notes and saved-work review",
-          ],
-        },
-        {
-          name: "Paid",
-          price: "₱199",
-          period: "per 30 days",
-          description: "More room for regular studying.",
-          items: [
-            "The same supported study tools",
-            "Higher usage allowances",
-            "Renew when you choose with QR Ph",
-          ],
-        },
-      ].map((plan) => (
+    <div
+      className={publicBeta ? "mx-auto max-w-sm" : "grid gap-5 sm:grid-cols-2"}
+    >
+      {availablePlans.map((plan) => (
         <Card
           key={plan.name}
           className="rounded-3xl py-7 [--card-spacing:--spacing(7)]"
@@ -436,7 +448,11 @@ export function PlanOverview() {
               className="h-11 w-full rounded-full"
               render={
                 <Link
-                  href={plan.name === "Free" ? "/sign-up" : "/pricing#renewal"}
+                  href={
+                    plan.name === "Free"
+                      ? workspaceHref("/sign-up")
+                      : "/pricing#renewal"
+                  }
                   prefetch={false}
                 />
               }

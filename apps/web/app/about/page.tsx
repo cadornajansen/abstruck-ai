@@ -1,4 +1,5 @@
 import { PublicPage, PublicSection } from "@/components/public-page"
+import { isProductionRelease } from "@/lib/release"
 import { StartButton } from "@/components/marketing/landing"
 import { marketingMetadata } from "@/components/marketing/metadata"
 
@@ -30,15 +31,24 @@ export default function AboutPage() {
           </p>
         </PublicSection>
         <PublicSection title="Where we are today">
-          <p>
-            The development workspace is being tested for reliability,
-            usefulness and operating costs. Public launch is a separate step. We
-            have no published student outcomes or testimonials yet.
-          </p>
-          <p>
-            Free is ongoing. Paid access is planned at ₱199 per 30 days, with
-            higher allowances and customer-initiated QR Ph renewal.
-          </p>
+          {isProductionRelease() ? (
+            <p>
+              Abstruck is in free public beta. We’re learning how well it works
+              for students and improving it as we go.
+            </p>
+          ) : (
+            <>
+              <p>
+                The development workspace is being tested for reliability,
+                usefulness and operating costs. Public launch is a separate
+                step. We have no published student outcomes or testimonials yet.
+              </p>
+              <p>
+                Free is ongoing. Paid access is planned at ₱199 per 30 days,
+                with higher allowances and customer-initiated QR Ph renewal.
+              </p>
+            </>
+          )}
         </PublicSection>
         <div>
           <StartButton />

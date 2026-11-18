@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { workspaceHref } from "@/lib/release"
 import { ArrowRight } from "iconoir-react"
 import { Button } from "@workspace/ui/components/button"
 import { PublicPage, PublicSection } from "@/components/public-page"
@@ -6,7 +7,7 @@ import { marketingMetadata } from "@/components/marketing/metadata"
 
 export const metadata = marketingMetadata(
   "Help & contact",
-  "Find help with Abstruck materials, account access and development payment questions through the existing support flow.",
+  "Find help with Abstruck materials, account access and usage questions through the existing support flow.",
   "/contact"
 )
 export default function ContactPage() {
@@ -28,7 +29,9 @@ export default function ContactPage() {
               size="lg"
               className="h-11 rounded-full px-5"
               nativeButton={false}
-              render={<Link href="/support" prefetch={false} />}
+              render={
+                <Link href={workspaceHref("/support")} prefetch={false} />
+              }
             >
               Open Help & Support
               <ArrowRight data-icon="inline-end" />
@@ -42,15 +45,21 @@ export default function ContactPage() {
         <PublicSection title="Having trouble signing in?">
           <div className="flex flex-wrap gap-5">
             <Link
-              href="/reset-password"
+              href={workspaceHref("/reset-password")}
               className="underline underline-offset-4"
             >
               Reset your password
             </Link>
-            <Link href="/verify-email" className="underline underline-offset-4">
+            <Link
+              href={workspaceHref("/verify-email")}
+              className="underline underline-offset-4"
+            >
               Resend verification email
             </Link>
-            <Link href="/sign-in" className="underline underline-offset-4">
+            <Link
+              href={workspaceHref("/sign-in")}
+              className="underline underline-offset-4"
+            >
               Back to sign in
             </Link>
           </div>
@@ -61,7 +70,7 @@ export default function ContactPage() {
             <Link href="/pricing" className="underline underline-offset-4">
               Pricing
             </Link>{" "}
-            for Free and Paid details, or the{" "}
+            for plan details, or the{" "}
             <Link href="/privacy" className="underline underline-offset-4">
               Privacy notice
             </Link>{" "}

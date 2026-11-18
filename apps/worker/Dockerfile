@@ -11,6 +11,20 @@ COPY apps/worker/src ./apps/worker/src
 RUN pnpm --filter @workspace/worker build
 RUN pnpm --filter @workspace/worker deploy --prod --legacy /runtime
 
+FROM postgres:18-bookworm AS backup
+WORKDIR /app
+COPY --from=build /usr/local/bin/node /usr/local/bin/node
+# The backup script resolves the S3 client using apps/web/package.json.
+COPY --from=build /runtime/node_modules ./apps/web/node_modules
+COPY apps/web/package.json ./apps/web/package.json
+COPY scripts/database-backup.mjs ./scripts/database-backup.mjs
+COPY config/supabase-ca.crt ./config/supabase-ca.crt
+RUN node --version && pg_dump --version \
+    && mkdir -m 0700 /app/.local && chown postgres:postgres /app/.local
+ENTRYPOINT []
+USER postgres
+CMD ["node", "scripts/database-backup.mjs", "create"]
+
 FROM node:24.18.0-bookworm-slim AS runtime
 WORKDIR /app
 # Copy small assets before installing office/media tools: VFS builders deep-copy each parent layer.

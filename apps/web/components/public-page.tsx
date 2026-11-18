@@ -1,5 +1,6 @@
 import type { ReactNode } from "react"
 import { Badge } from "@workspace/ui/components/badge"
+import { isProductionRelease } from "@/lib/release"
 import { getCurrentUser } from "@/lib/auth/session"
 import { MarketingShell } from "@/components/marketing/marketing-shell"
 
@@ -23,7 +24,9 @@ export async function PublicPage({
         className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-10 px-5 pt-14 pb-20 outline-none sm:px-8 sm:pt-20"
       >
         <div className="flex max-w-3xl flex-col items-start gap-5">
-          <Badge variant="outline">Development MVP</Badge>
+          <Badge variant="outline">
+            {isProductionRelease() ? "Public beta" : "Development MVP"}
+          </Badge>
           <h1 className="text-4xl leading-[1.1] font-medium tracking-tight text-balance sm:text-6xl">
             {title}
           </h1>

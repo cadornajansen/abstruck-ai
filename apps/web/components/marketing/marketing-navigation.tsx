@@ -39,12 +39,19 @@ const links = [
   ["Blog", "/blog"],
 ] as const
 
-export function AuthLinks({ authState }: { authState: MarketingAuthState }) {
+function AuthLinks({
+  authState,
+  workspaceRoot,
+}: {
+  authState: MarketingAuthState
+  workspaceRoot: string
+}) {
+  const authPath = (path: string): string => `${workspaceRoot}${path}`
   return authState === "signed-in" ? (
     <Button
       size="lg"
       className="h-10 rounded-full px-5"
-      render={<Link href="/" prefetch={false} />}
+      render={<Link href={workspaceRoot} prefetch={false} />}
       nativeButton={false}
     >
       Open workspace <ArrowRight data-icon="inline-end" />
@@ -55,7 +62,7 @@ export function AuthLinks({ authState }: { authState: MarketingAuthState }) {
         variant="ghost"
         size="lg"
         className="h-10 rounded-full"
-        render={<Link href="/sign-in" prefetch={false} />}
+        render={<Link href={authPath("sign-in")} prefetch={false} />}
         nativeButton={false}
       >
         Sign in
@@ -63,7 +70,7 @@ export function AuthLinks({ authState }: { authState: MarketingAuthState }) {
       <Button
         size="lg"
         className="h-10 rounded-full px-5"
-        render={<Link href="/sign-up" prefetch={false} />}
+        render={<Link href={authPath("sign-up")} prefetch={false} />}
         nativeButton={false}
       >
         Start free
@@ -75,9 +82,11 @@ export function AuthLinks({ authState }: { authState: MarketingAuthState }) {
 export function MarketingNavigation({
   authState,
   homeHref,
+  workspaceRoot,
 }: {
   authState: MarketingAuthState
   homeHref: string
+  workspaceRoot: string
 }) {
   const pathname = usePathname()
   const reduced = useReducedMotion()
@@ -181,7 +190,7 @@ export function MarketingNavigation({
           ))}
         </nav>
         <div className="hidden items-center gap-2 md:flex">
-          <AuthLinks authState={authState} />
+          <AuthLinks authState={authState} workspaceRoot={workspaceRoot} />
         </div>
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetTrigger
@@ -234,7 +243,7 @@ export function MarketingNavigation({
               className="mt-auto flex flex-wrap gap-2 pb-4"
               onClick={() => setMobileOpen(false)}
             >
-              <AuthLinks authState={authState} />
+              <AuthLinks authState={authState} workspaceRoot={workspaceRoot} />
             </div>
           </SheetContent>
         </Sheet>

@@ -1,3 +1,4 @@
+import { isProductionRelease } from "@/lib/release"
 import { getCurrentUser } from "@/lib/auth/session"
 import { MarketingShell } from "@/components/marketing/marketing-shell"
 import { StudyDemo } from "@/components/marketing/study-demo"
@@ -30,8 +31,8 @@ export default async function FeaturesPage() {
           </h1>
           <p className="mx-auto mt-6 max-w-lg leading-7 text-muted-foreground">
             Read, ask, write and practise with your materials in one place.
-            These capabilities are available in the development workspace;
-            public launch remains pending.
+            {!isProductionRelease() &&
+              " These capabilities are available in the development workspace."}
           </p>
           <div className="mt-7">
             <StartButton />

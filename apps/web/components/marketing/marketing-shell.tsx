@@ -1,5 +1,6 @@
 import type { ReactNode } from "react"
 import Link from "next/link"
+import { workspaceHref } from "@/lib/release"
 import { Brand } from "@/components/workspace/brand"
 import { Separator } from "@workspace/ui/components/separator"
 import {
@@ -24,7 +25,11 @@ export function MarketingShell({
       >
         Skip to content
       </a>
-      <MarketingNavigation authState={authState} homeHref={homeHref} />
+      <MarketingNavigation
+        authState={authState}
+        homeHref={homeHref}
+        workspaceRoot={workspaceHref("/")}
+      />
       {children}
       <footer className="mt-auto bg-muted/30">
         <Separator />
@@ -42,7 +47,7 @@ export function MarketingShell({
               [
                 ["Features", "/features"],
                 ["Pricing", "/pricing"],
-                ["Start free", "/sign-up"],
+                ["Start free", workspaceHref("/sign-up")],
               ],
             ],
             [

@@ -1,6 +1,7 @@
 import "server-only"
 
 import { createHash, createHmac, timingSafeEqual } from "node:crypto"
+import { isProductionRelease } from "@/lib/release"
 
 const resourceId = (value: unknown, prefix: string): value is string =>
   typeof value === "string" &&
@@ -32,7 +33,9 @@ function assert(
 export function testPaymentKey(): string {
   const key = process.env.PAYMONGO_SECRET_KEY
   assert(
-    typeof key === "string" && /^sk_test_[A-Za-z0-9]{12,}$/.test(key),
+    !isProductionRelease() &&
+      typeof key === "string" &&
+      /^sk_test_[A-Za-z0-9]{12,}$/.test(key),
     "test_payments_unavailable",
     503
   )
@@ -42,7 +45,9 @@ export function testPaymentKey(): string {
 export function testWebhookSecret(): string {
   const secret = process.env.PAYMONGO_WEBHOOK_SECRET
   assert(
-    typeof secret === "string" && /^whsk_[A-Za-z0-9]{12,}$/.test(secret),
+    !isProductionRelease() &&
+      typeof secret === "string" &&
+      /^whsk_[A-Za-z0-9]{12,}$/.test(secret),
     "test_webhook_unavailable",
     503
   )

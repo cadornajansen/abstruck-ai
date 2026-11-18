@@ -9,6 +9,8 @@
 !packages/eslint-config/package.json
 !apps/
 !apps/worker/
+!apps/web/
+!apps/web/package.json
 !apps/worker/package.json
 !apps/worker/tsconfig.json
 !apps/worker/src/
@@ -23,3 +25,7 @@
 !test/feasibility/fixtures/greenhouse.pptx
 !test/feasibility/fixtures/malformed.pdf
 !test/feasibility/fixtures/disguised.pdf
+!scripts/
+!scripts/database-backup.mjs
+!config/
+!config/supabase-ca.crt

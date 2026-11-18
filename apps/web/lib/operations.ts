@@ -1,4 +1,6 @@
 import "server-only"
+
+import { isProductionRelease } from "@/lib/release"
 import { createHash } from "node:crypto"
 import type { User } from "@supabase/supabase-js"
 import { getCurrentUser } from "@/lib/auth/session"
@@ -150,7 +152,8 @@ export async function getOperationsOverview(): Promise<OperationsOverview> {
       ),
       service(
         "PayMongo test",
-        /^sk_test_/.test(process.env.PAYMONGO_SECRET_KEY ?? ""),
+        !isProductionRelease() &&
+          /^sk_test_/.test(process.env.PAYMONGO_SECRET_KEY ?? ""),
         "Test mode only; no live reconciliation is allowed."
       ),
       service(

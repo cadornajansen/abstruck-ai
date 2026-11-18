@@ -36,7 +36,22 @@ const faqs = [
   ],
 ] as const
 
-export function MarketingFaq() {
+export function MarketingFaq({ publicBeta }: { publicBeta: boolean }) {
+  const items = publicBeta
+    ? [
+        [
+          "What can I bring into Abstruck?",
+          "Import PDF, DOCX, PPTX, pasted text, or audio and video files within your allowance. You can also try a YouTube link. If it cannot be imported, upload a file you have permission to use.",
+        ],
+        faqs[1],
+        [
+          "Can I start for free?",
+          "Yes. The public beta is free and includes usage allowances for uploads and study tools.",
+        ],
+        faqs[3],
+        faqs[4],
+      ]
+    : faqs
   const [open, setOpen] = useState<string[]>([])
   const reduced = useReducedMotion()
   return (
@@ -53,7 +68,7 @@ export function MarketingFaq() {
         </h2>
       </div>
       <Accordion value={open} onValueChange={setOpen}>
-        {faqs.map(([question, answer], index) => (
+        {items.map(([question, answer], index) => (
           <AccordionItem key={question} value={String(index)}>
             <AccordionTrigger className="min-h-16 gap-6 py-5 text-base">
               {question}

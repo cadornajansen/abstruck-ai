@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation"
+import { isProductionRelease } from "@/lib/release"
 import { requireUser } from "@/lib/auth/session"
 import { BillingPage } from "@/components/workspace/billing-page"
 
@@ -18,5 +19,11 @@ export default async function BillingRoute({
   const user = await requireUser(
     `/billing${orderId ? `?order=${orderId}` : ""}`
   )
-  return <BillingPage ownerId={user.id} orderId={orderId} />
+  return (
+    <BillingPage
+      ownerId={user.id}
+      orderId={orderId}
+      sandboxCheckout={!isProductionRelease()}
+    />
+  )
 }
