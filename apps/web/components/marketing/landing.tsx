@@ -29,9 +29,6 @@ import {
 } from "./landing-media"
 import { Reveal } from "./motion"
 
-const f6sListingHref =
-  "https://www.f6s.com/companies/artificial-intelligence/philippines/co"
-
 const sampleMaterials = [
   [Page, "The active recall guide", "PDF · 6 pages"],
   [Play, "How memories are made", "Lecture recording"],
@@ -61,7 +58,7 @@ export function LandingContent() {
     <main id="main-content" tabIndex={-1} className="outline-none">
       <section className="mx-auto flex max-w-4xl flex-col items-center px-5 pt-20 pb-16 text-center sm:pt-28 sm:pb-24 lg:pt-32">
         <a
-          href={f6sListingHref}
+          href="https://www.f6s.com/abstruck"
           className="rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
         >
           <Image
