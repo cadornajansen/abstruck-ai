@@ -80,11 +80,7 @@ export function StudyDemo() {
       aria-label="Interactive fictional study workspace"
       className="mx-auto w-full max-w-6xl scroll-mt-28 px-5 sm:px-8"
     >
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-        <span className="flex items-center gap-2">
-          <span className="size-1.5 rounded-full bg-info-accent" />
-          Interactive demo · Fictional sample data
-        </span>
+      <div className="mb-4 flex justify-end">
         <Button size="sm" variant="ghost" onClick={reset}>
           <Refresh data-icon="inline-start" />
           Reset demo
@@ -314,10 +310,6 @@ export function StudyDemo() {
           </div>
         </Tabs>
       </div>
-      <p className="mt-4 text-center text-xs leading-5 text-muted-foreground">
-        A small example of the study flow. All answers are prepared; demo
-        actions use no AI or paid processing.
-      </p>
     </section>
   )
 }

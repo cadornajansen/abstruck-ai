@@ -27,6 +27,7 @@ export default async function MarketingPreview({
     <MarketingShell
       authState={signedInFixture ? "signed-in" : "guest"}
       homeHref="/marketing-preview"
+      footerVariant={screen[0] === "article" ? "full" : "compact"}
     >
       <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 border-b border-info-border/50 bg-info px-5 py-2 text-center text-xs leading-5 text-info-foreground">
         <span>

@@ -1,32 +1,42 @@
+import Image from "next/image"
 import Link from "next/link"
 import { isProductionRelease, workspaceHref } from "@/lib/release"
 import {
   ArrowRight,
-  ArrowDown,
   Page,
   SoundHigh,
   Notes,
   Folder,
-  Check,
-  Book,
   Play,
   ShareAndroid,
   ChatBubble,
   Network,
 } from "iconoir-react"
-import { Button } from "@workspace/ui/components/button"
+import { Button, buttonVariants } from "@workspace/ui/components/button"
 import { Badge } from "@workspace/ui/components/badge"
 import {
   Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
   CardContent,
-  CardFooter,
+  CardDescription,
+  CardHeader,
 } from "@workspace/ui/components/card"
-import { StudyDemo } from "./study-demo"
+import { cn } from "@workspace/ui/lib/utils"
 import { MarketingFaq } from "./marketing-faq"
+import {
+  LandingDemoScreenshot,
+  LandingFeaturePreviews,
+  UniversityCommunity,
+} from "./landing-media"
 import { Reveal } from "./motion"
+
+const f6sListingHref =
+  "https://www.f6s.com/companies/artificial-intelligence/philippines/co"
+
+const sampleMaterials = [
+  [Page, "The active recall guide", "PDF · 6 pages"],
+  [Play, "How memories are made", "Lecture recording"],
+  [Notes, "My chapter notes", "Pasted text"],
+] as const
 
 export function StartButton({
   children = "Start free",
@@ -36,7 +46,7 @@ export function StartButton({
   return (
     <Button
       size="lg"
-      className="h-12 rounded-full px-7"
+      className="h-12 rounded-full px-5 has-data-[icon=inline-end]:pr-5"
       render={<Link href={workspaceHref("/sign-up")} prefetch={false} />}
       nativeButton={false}
     >
@@ -46,127 +56,74 @@ export function StartButton({
   )
 }
 
-function HeroObjects() {
-  return (
-    <div
-      aria-hidden="true"
-      className="pointer-events-none absolute inset-0 mx-auto hidden max-w-[1440px] xl:block"
-    >
-      <div className="absolute top-24 left-10 flex w-40 -rotate-12 flex-col gap-4 rounded-2xl border border-border/40 bg-background p-5 shadow-composer">
-        <SoundHigh className="size-5 text-info-foreground" />
-        <p className="text-sm leading-5">
-          How memories
-          <br />
-          are made
-        </p>
-        <div className="flex h-7 items-center gap-1">
-          {["h-3", "h-5", "h-7", "h-4", "h-6", "h-3", "h-5"].map(
-            (height, index) => (
-              <span
-                key={index}
-                className={`w-1 rounded-full bg-info-border ${height}`}
-              />
-            )
-          )}
-        </div>
-      </div>
-      <div className="absolute top-76 left-36 w-40 rotate-6 rounded-2xl border border-info-border/40 bg-info p-5">
-        <Book className="mb-3 size-5 text-info-foreground" />
-        <p className="text-sm">What is retrieval?</p>
-        <p className="mt-2 text-xs text-muted-foreground">
-          Bring it back to mind.
-        </p>
-      </div>
-      <div className="absolute top-32 right-10 flex w-42 rotate-9 flex-col gap-4 rounded-2xl border border-border/40 bg-background p-5 shadow-composer">
-        <Notes className="size-5 text-info-foreground" />
-        <p className="text-sm">In my own words</p>
-        <span className="w-fit rounded bg-info px-1 text-xs text-info-foreground">
-          Make a connection.
-        </span>
-        <div className="flex flex-col gap-2">
-          <span className="h-1 rounded bg-border" />
-          <span className="h-1 rounded bg-border" />
-          <span className="h-1 w-2/3 rounded bg-border" />
-        </div>
-      </div>
-    </div>
-  )
-}
-
 export function LandingContent() {
-  const beta = isProductionRelease()
   return (
     <main id="main-content" tabIndex={-1} className="outline-none">
-      <section className="relative overflow-hidden bg-linear-to-b from-muted/35 to-background px-5 pt-16 pb-14 sm:pt-22 sm:pb-16">
-        <HeroObjects />
-        <div className="relative mx-auto flex max-w-4xl flex-col items-center text-center">
-          <p className="mb-5 text-xs font-medium tracking-[0.16em] text-muted-foreground uppercase">
-            A little space to understand
-          </p>
-          <h1 className="text-[2.05rem] leading-[1.08] font-medium tracking-[-0.055em] text-balance sm:text-[clamp(2.6rem,5.2vw,4.5rem)]">
-            Everything you study.
-            <br />
-            <span className="text-muted-foreground">One calm workspace.</span>
-          </h1>
-          <p className="mt-7 max-w-md text-base leading-7 text-muted-foreground sm:text-lg">
-            Bring your class materials together. Ask with sources, make it your
-            own, and practise what you’ve learned.
-          </p>
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <StartButton />
-            <Button
-              size="lg"
-              variant="outline"
-              className="h-12 rounded-full px-6"
-              render={<a href="#product-demo" />}
-              nativeButton={false}
-            >
-              Explore the demo
-              <ArrowDown data-icon="inline-end" />
-            </Button>
-          </div>
-          <p className="mt-5 text-xs text-muted-foreground">
-            Ongoing Free plan · Made with Philippine students in mind
-          </p>
-        </div>
-      </section>
-      <StudyDemo />
-      <FeatureStory />
-      <section
-        id="plans"
-        className="mx-auto max-w-4xl scroll-mt-28 px-5 py-16 sm:px-8 sm:py-24"
-      >
-        <div className="mb-10 text-center">
-          <p className="mb-4 text-xs tracking-widest text-muted-foreground uppercase">
-            Room for your routine
-          </p>
-          <h2 className="text-3xl font-medium tracking-tight sm:text-5xl">
-            Start free. Find your pace.
-          </h2>
-          <p className="mt-5 text-muted-foreground">
-            {beta
-              ? "Create a free account and start studying during the beta."
-              : "The same supported tools, with different allowances."}
-          </p>
-        </div>
-        <PlanOverview publicBeta={beta} />
-        {!beta && (
-          <p className="mt-5 text-center text-xs leading-6 text-muted-foreground">
-            Development plans. Numeric allowances are being validated. Checkout
-            remains in test mode.
-          </p>
-        )}
-        <div className="mt-6 text-center">
-          <Link
-            href="/pricing"
-            className="rounded text-sm underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-ring"
+      <section className="mx-auto flex max-w-4xl flex-col items-center px-5 pt-20 pb-16 text-center sm:pt-28 sm:pb-24 lg:pt-32">
+        <a
+          href={f6sListingHref}
+          className="rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+        >
+          <Image
+            src="/brands/f6s-badge.png"
+            alt="F6S badge for Abstruck, #5 Top Company in AI, November 2026"
+            width={1203}
+            height={297}
+            unoptimized
+            className="block h-auto w-56 sm:w-64"
+          />
+        </a>
+        <h1 className="mt-6 text-[clamp(2.25rem,5.5vw,4.25rem)] leading-[1.05] font-medium tracking-[-0.055em] text-balance text-foreground">
+          Everything you study.
+          <span className="block text-muted-foreground">
+            One smart workspace.
+          </span>
+        </h1>
+        <p className="mt-5 max-w-xl text-base leading-7 text-balance text-muted-foreground sm:text-lg">
+          Turn class materials into notes, cited answers, and practice.
+        </p>
+        <div className="mt-7 flex flex-wrap justify-center gap-3">
+          <StartButton />
+          <a
+            href="#study-tools"
+            className={cn(
+              buttonVariants({ size: "lg", variant: "outline" }),
+              "h-12 rounded-full px-6"
+            )}
           >
-            {beta ? "See beta pricing" : "See plans and renewal details"}
-          </Link>
+            See features
+          </a>
         </div>
       </section>
-      <MarketingFaq publicBeta={beta} />
-      <FinalCta />
+
+      <LandingDemoScreenshot />
+      <UniversityCommunity />
+      <LandingFeaturePreviews />
+      <MarketingFaq />
+      <section
+        aria-labelledby="landing-signup-heading"
+        className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-24"
+      >
+        <Card className="items-center gap-7 rounded-3xl bg-linear-to-b from-card to-muted/35 px-6 py-14 text-center shadow-composer ring-border/70 sm:gap-9 sm:py-20">
+          <CardHeader className="flex w-full max-w-4xl flex-col items-center gap-4 px-0">
+            <h2
+              id="landing-signup-heading"
+              className="text-3xl leading-tight font-medium tracking-tight text-balance sm:text-5xl"
+            >
+              Turn your next lecture into{" "}
+              <span className="rounded-lg bg-(--tool-flashcards-bg) px-2">
+                flashcards.
+              </span>
+            </h2>
+            <CardDescription className="max-w-lg text-base leading-relaxed text-balance sm:text-lg">
+              Start with a recording, a slide deck, or a PDF from class.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <StartButton>Create my free workspace</StartButton>
+          </CardContent>
+        </Card>
+      </section>
     </main>
   )
 }
@@ -212,27 +169,20 @@ export function FeatureStory() {
                 </div>
               </div>
               <div className="mt-7 flex flex-col gap-1">
-                {[
-                  [Page, "The active recall guide", "PDF · 6 pages"],
-                  [Play, "How memories are made", "Lecture recording"],
-                  [Notes, "My chapter notes", "Pasted text"],
-                ].map(([Icon, title, detail]) => {
-                  const MaterialIcon = Icon as typeof Page
-                  return (
-                    <div
-                      key={String(title)}
-                      className="flex items-center gap-3 rounded-xl border border-border/50 px-4 py-4"
-                    >
-                      <MaterialIcon className="size-5 shrink-0 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm">{String(title)}</p>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {String(detail)}
-                        </p>
-                      </div>
+                {sampleMaterials.map(([Icon, title, detail]) => (
+                  <div
+                    key={title}
+                    className="flex items-center gap-3 rounded-xl border border-border/50 px-4 py-4"
+                  >
+                    <Icon className="size-5 shrink-0 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm">{title}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {detail}
+                      </p>
                     </div>
-                  )
-                })}
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -381,88 +331,6 @@ export function FeatureStory() {
           </p>
         )}
       </section>
-    </div>
-  )
-}
-
-function PlanOverview({ publicBeta }: { publicBeta: boolean }) {
-  const plans = [
-    {
-      name: "Free",
-      price: "₱0",
-      period: "ongoing",
-      description: "Make room for a new study routine.",
-      items: [
-        "The supported study tools",
-        "Smaller usage allowances",
-        "Manual notes and saved-work review",
-      ],
-    },
-    {
-      name: "Paid",
-      price: "₱199",
-      period: "per 30 days",
-      description: "More room for regular studying.",
-      items: [
-        "The same supported study tools",
-        "Higher usage allowances",
-        "Renew when you choose with QR Ph",
-      ],
-    },
-  ]
-  const availablePlans = publicBeta ? plans.slice(0, 1) : plans
-  return (
-    <div
-      className={publicBeta ? "mx-auto max-w-sm" : "grid gap-5 sm:grid-cols-2"}
-    >
-      {availablePlans.map((plan) => (
-        <Card
-          key={plan.name}
-          className="rounded-3xl py-7 [--card-spacing:--spacing(7)]"
-        >
-          <CardHeader>
-            <CardTitle>{plan.name}</CardTitle>
-            <CardDescription>{plan.description}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p>
-              <span className="text-4xl font-medium tracking-tight">
-                {plan.price}
-              </span>
-              <span className="ml-2 text-sm text-muted-foreground">
-                {plan.period}
-              </span>
-            </p>
-            <ul className="mt-7 flex flex-col gap-4 text-sm">
-              {plan.items.map((item) => (
-                <li key={item} className="flex items-start gap-2">
-                  <Check className="size-4 shrink-0 text-muted-foreground" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-          <CardFooter className="mt-auto border-0 bg-transparent pt-3">
-            <Button
-              variant={plan.name === "Free" ? "default" : "outline"}
-              className="h-11 w-full rounded-full"
-              render={
-                <Link
-                  href={
-                    plan.name === "Free"
-                      ? workspaceHref("/sign-up")
-                      : "/pricing#renewal"
-                  }
-                  prefetch={false}
-                />
-              }
-              nativeButton={false}
-            >
-              {plan.name === "Free" ? "Start free" : "See renewal details"}
-            </Button>
-          </CardFooter>
-        </Card>
-      ))}
     </div>
   )
 }

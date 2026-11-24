@@ -31,7 +31,7 @@ export default async function Page() {
   if (!user) {
     if (productionHost === APP_HOSTNAME) redirect("/sign-in")
     return (
-      <MarketingShell authState="guest">
+      <MarketingShell authState="guest" footerVariant="compact">
         <LandingContent />
       </MarketingShell>
     )
