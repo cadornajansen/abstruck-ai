@@ -271,11 +271,6 @@ export function BillingSettingsPanel({
               {usage.plan === "paid" ? "Plan & usage" : "Upgrade Plan"}
             </Button>
           </div>
-          {usage.testMode && (
-            <Badge variant="outline" className="w-fit">
-              Test billing
-            </Badge>
-          )}
           {usage.nextPaidStartsAt && (
             <p className="text-sm text-muted-foreground">
               Your next prepaid period starts{" "}
