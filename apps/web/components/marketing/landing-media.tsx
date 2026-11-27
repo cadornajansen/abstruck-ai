@@ -29,14 +29,23 @@ export function LandingDemoScreenshot() {
       aria-label="Abstruck product demo"
       className="mx-auto max-w-6xl px-5 sm:px-8"
     >
-      <Image
-        src={`${demoPath}/cs229-workspace.webp`}
-        alt="CS229 lecture notes open to the LMS algorithm, with Abstruck’s Learn tab and a saved supervised learning recap alongside the PDF."
-        width={1532}
-        height={725}
-        unoptimized
-        className="block h-auto w-full rounded-2xl border border-border/70 shadow-sm sm:rounded-3xl"
-      />
+      <picture>
+        <source
+          media="(max-width: 767px)"
+          srcSet={`${demoPath}/cs229-workspace-mobile.webp`}
+          type="image/webp"
+        />
+        <Image
+          src={`${demoPath}/cs229-workspace.webp`}
+          alt="CS229 lecture notes open to the LMS algorithm, with Abstruck’s Learn tab and a saved supervised learning recap alongside the PDF."
+          width={1532}
+          height={725}
+          loading="eager"
+          fetchPriority="high"
+          unoptimized
+          className="block h-auto w-full rounded-2xl border border-border/70 shadow-sm sm:rounded-3xl"
+        />
+      </picture>
     </section>
   )
 }
