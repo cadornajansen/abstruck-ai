@@ -59,7 +59,7 @@ const faqs = [
   ],
   [
     "Is there a Free plan?",
-    "Yes. Free is ongoing. The planned paid option is ₱199 for 30 days, with the same tools and higher allowances. Allowances are provisional until cost testing is complete.",
+    "Yes. Free is ongoing. Pro costs US$6.99 or ₱199 monthly and includes higher study allowances.",
   ],
 ]
 
@@ -195,14 +195,14 @@ export function LandingPreview() {
                 ],
               },
               {
-                name: "Paid Plan",
-                price: "₱199",
-                period: "per 30 days",
+                name: "Pro",
+                price: "US$6.99",
+                period: "or ₱199 per month",
                 detail: "More room for regular study.",
                 items: [
                   "All the same study tools",
                   "Higher import and generation allowances",
-                  "Renew when you choose with QR Ph",
+                  "Manage your monthly subscription with Polar",
                 ],
               },
             ].map((plan) => (
@@ -242,9 +242,8 @@ export function LandingPreview() {
             ))}
           </div>
           <p className="mt-5 text-center text-xs leading-6 text-muted-foreground">
-            Development preview. Paid checkout is unavailable here. Final usage
-            allowances depend on cost validation; no automatic renewal or charge
-            is enabled.
+            Explore plans in this preview. To subscribe, open Plan &amp; Billing
+            in your workspace.
           </p>
         </section>
         <section

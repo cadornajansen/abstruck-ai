@@ -19,9 +19,6 @@ import {
 } from "@workspace/ui/components/card"
 import { Skeleton } from "@workspace/ui/components/skeleton"
 import { Spinner } from "@workspace/ui/components/spinner"
-import { Field, FieldLabel } from "@workspace/ui/components/field"
-import { Input } from "@workspace/ui/components/input"
-import { checkoutReferenceSchema } from "@/lib/operations-types"
 import {
   Table,
   TableBody,
@@ -36,21 +33,13 @@ import {
   TabsList,
   TabsTrigger,
 } from "@workspace/ui/components/tabs"
-import type {
-  OperationsJob,
-  OperationsOverview,
-  OperationsPayment,
-} from "@/lib/operations-types"
+import type { OperationsJob, OperationsOverview } from "@/lib/operations-types"
 import {
   OperationsRequestError,
   operationsDate,
   operationsMessage,
   operationsRequest,
 } from "./operations-request"
-
-type RecoveryAction =
-  | { type: "retry"; job: OperationsJob }
-  | { type: "reconcile"; payment: OperationsPayment }
 
 function stateLabel(value: string): string {
   return value.replaceAll("_", " ")
@@ -93,9 +82,6 @@ export function OperationsScreen() {
   const pendingRef = useRef(false)
   const requestIds = useRef(new Map<string, string>())
   const [actionError, setActionError] = useState("")
-  const [checkoutReferences, setCheckoutReferences] = useState<
-    Record<string, string>
-  >({})
   const [feedback, setFeedback] = useState<{
     message: string
     auditId: string
@@ -128,34 +114,9 @@ export function OperationsScreen() {
     return () => controller.abort()
   }, [reload])
 
-  async function recover(action: RecoveryAction): Promise<void> {
-    if (pendingRef.current || loading || error) return
-    if (action.type === "retry" && !action.job.retryAllowed) return
-    if (
-      action.type === "reconcile" &&
-      (!action.payment.testMode ||
-        (!action.payment.reconcileAllowed &&
-          !["creating", "review"].includes(action.payment.state)))
-    )
-      return
-    const id = action.type === "retry" ? action.job.id : action.payment.id
-    const checkoutId =
-      action.type === "reconcile" ? checkoutReferences[id]?.trim() : undefined
-    if (
-      action.type === "reconcile" &&
-      !action.payment.reconcileAllowed &&
-      !checkoutReferenceSchema.safeParse(checkoutId).success
-    ) {
-      setActionError(
-        "Enter the original checkout ID from PayMongo before recovering this order."
-      )
-      return
-    }
-    const version =
-      action.type === "retry"
-        ? `${action.job.attempt}:${action.job.updatedAt}`
-        : action.payment.updatedAt
-    const key = `${action.type}:${id}:${version}`
+  async function retryJob(job: OperationsJob): Promise<void> {
+    if (pendingRef.current || loading || error || !job.retryAllowed) return
+    const key = `retry:${job.id}:${job.attempt}:${job.updatedAt}`
     const requestId = requestIds.current.get(key) ?? crypto.randomUUID()
     requestIds.current.set(key, requestId)
     pendingRef.current = true
@@ -166,19 +127,13 @@ export function OperationsScreen() {
       const result = await operationsRequest<{
         state: string
         auditId: string
-      }>(
-        `/api/operations/${action.type === "retry" ? "jobs" : "payments"}/${id}/${action.type}`,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            requestId,
-            ...(checkoutId ? { checkoutId } : {}),
-          }),
-        }
-      )
+      }>(`/api/operations/jobs/${job.id}/retry`, {
+        method: "POST",
+        body: JSON.stringify({ requestId }),
+      })
       requestIds.current.delete(key)
       setFeedback({
-        message: `${action.type === "retry" ? "Retry accepted" : "Sandbox reconciliation completed"}. Saved state: ${stateLabel(result.state)}.`,
+        message: `Retry accepted. Saved state: ${stateLabel(result.state)}.`,
         auditId: result.auditId,
       })
     } catch (cause) {
@@ -224,8 +179,7 @@ export function OperationsScreen() {
           <div>
             <h1 className="text-3xl font-medium tracking-tight">Operations</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              Founder access · job recovery, sandbox payments and recorded
-              usage.
+              Founder access · job recovery, billing history and recorded usage.
             </p>
             {overview && (
               <p className="mt-2 text-xs text-muted-foreground">
@@ -356,9 +310,7 @@ export function OperationsScreen() {
                                 size="sm"
                                 disabled={disabled || !job.retryAllowed}
                                 aria-label={`Retry job ${job.id}`}
-                                onClick={() =>
-                                  void recover({ type: "retry", job })
-                                }
+                                onClick={() => void retryJob(job)}
                               >
                                 {pending?.startsWith(`retry:${job.id}:`) && (
                                   <Spinner />
@@ -389,18 +341,20 @@ export function OperationsScreen() {
               </TabsContent>
               <TabsContent value="payments" className="min-w-0">
                 <div className="mb-4">
-                  <h2 className="text-lg font-medium">
-                    Payment reconciliation
-                  </h2>
+                  <h2 className="text-lg font-medium">Payment history</h2>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    Sandbox orders only. Reconciliation checks the payment
-                    state; it does not create a charge.
+                    Past prepaid orders appear here. View current subscriptions
+                    and invoices in the{" "}
+                    <a className="underline" href="https://polar.sh/dashboard/abstruck/sales">
+                      Polar dashboard
+                    </a>
+                    .
                   </p>
                 </div>
                 <div className="overflow-hidden rounded-2xl border border-border/60">
                   <Table
                     className="min-w-[680px]"
-                    aria-label="Payment reconciliation queue"
+                    aria-label="Prepaid order history"
                   >
                     <TableHeader>
                       <TableRow>
@@ -408,7 +362,6 @@ export function OperationsScreen() {
                         <TableHead>State</TableHead>
                         <TableHead>Amount</TableHead>
                         <TableHead>Updated</TableHead>
-                        <TableHead>Action</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -439,65 +392,12 @@ export function OperationsScreen() {
                             <TableCell className="text-xs text-muted-foreground">
                               {operationsDate(payment.updatedAt)}
                             </TableCell>
-                            <TableCell>
-                              {!payment.reconcileAllowed &&
-                                ["creating", "review"].includes(
-                                  payment.state
-                                ) && (
-                                  <Field className="mb-2 min-w-56">
-                                    <FieldLabel
-                                      htmlFor={`checkout-${payment.id}`}
-                                      className="text-xs"
-                                    >
-                                      Original PayMongo checkout ID
-                                    </FieldLabel>
-                                    <Input
-                                      id={`checkout-${payment.id}`}
-                                      value={
-                                        checkoutReferences[payment.id] ?? ""
-                                      }
-                                      placeholder="cs_…"
-                                      disabled={disabled}
-                                      onChange={(event) =>
-                                        setCheckoutReferences((values) => ({
-                                          ...values,
-                                          [payment.id]: event.target.value,
-                                        }))
-                                      }
-                                    />
-                                  </Field>
-                                )}
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={
-                                  disabled ||
-                                  !payment.testMode ||
-                                  (!payment.reconcileAllowed &&
-                                    (!["creating", "review"].includes(
-                                      payment.state
-                                    ) ||
-                                      !checkoutReferenceSchema.safeParse(
-                                        checkoutReferences[payment.id]
-                                      ).success))
-                                }
-                                aria-label={`Reconcile sandbox order ${payment.id}`}
-                                onClick={() =>
-                                  void recover({ type: "reconcile", payment })
-                                }
-                              >
-                                {pending?.startsWith(
-                                  `reconcile:${payment.id}:`
-                                ) && <Spinner />}
-                                Reconcile sandbox
-                              </Button>
-                            </TableCell>
                           </TableRow>
                         ))
                       ) : (
                         <TableRow>
                           <TableCell
-                            colSpan={5}
+                            colSpan={4}
                             className="py-10 text-center text-muted-foreground"
                           >
                             No payment orders in this snapshot.

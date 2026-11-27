@@ -298,14 +298,14 @@ export function FeatureStory() {
             </h2>
             <p className="mt-4 text-sm leading-7 text-muted-foreground">
               Use saved mind maps, flowcharts, timelines and data charts, or
-              revisit material through generated podcasts and narrated study
-              videos.
+              revisit material through generated podcasts and AI-narrated
+              slides.
             </p>
           </div>
           <div className="flex flex-wrap gap-3 md:max-w-sm">
             {[
               [Network, "Visual study outputs"],
-              [SoundHigh, "Podcasts & study videos"],
+              [SoundHigh, "Podcasts & narrated slides"],
               [ShareAndroid, "Read-only sharing"],
             ].map(([Icon, label]) => {
               const FormatIcon = Icon as typeof Network

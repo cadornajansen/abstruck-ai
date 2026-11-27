@@ -4,7 +4,8 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "env": ["VERCEL_ENV"],
+      "env": ["VERCEL_ENV", "POLAR_ENVIRONMENT", "POLAR_PRODUCT_ID", "POLAR_ORGANIZATION_ID"],
+      "passThroughEnv": ["POLAR_ACCESS_TOKEN", "POLAR_WEBHOOK_SECRET"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**", "dist/**"]
     },

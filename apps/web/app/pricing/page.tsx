@@ -1,12 +1,8 @@
-import { isProductionRelease, workspaceHref } from "@/lib/release"
+import { isPolarBillingConfigured } from "@/lib/polar-config"
+import { workspaceHref } from "@/lib/release"
 import { marketingMetadata } from "@/components/marketing/metadata"
 import Link from "next/link"
 import { Check } from "iconoir-react"
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@workspace/ui/components/alert"
 import { Button } from "@workspace/ui/components/button"
 import {
   Card,
@@ -20,64 +16,49 @@ import { PublicPage, PublicSection } from "@/components/public-page"
 
 export const metadata = marketingMetadata(
   "Pricing",
-  "Study with Abstruck for free. See the available tools and usage allowances.",
+  "Compare Free and Pro study allowances. Pro includes 10 hours of media processing, 500 document pages, and 300 study-chat questions each month.",
   "/pricing"
 )
 
 const plans = [
   {
     name: "Free",
-    price: "₱0",
-    period: "ongoing Free plan",
-    description: "Start a study routine with a smaller allowance.",
+    price: "$0",
+    period: "per month",
+    description: "For trying out the workspace.",
     features: [
-      "Supported study tools",
-      "Smaller provisional study allowances",
-      "Manual notes and review of saved work",
+      "10 minutes of media processing",
+      "50 document pages",
+      "20 study-chat questions per allowance period",
     ],
     href: "/sign-up",
     action: "Create a free account",
   },
   {
-    name: "Paid",
-    price: "₱199",
-    period: "for 30 days",
-    description: "More room for the same study tools.",
+    name: "Pro",
+    price: "US$6.99",
+    period: "or ₱199 per month",
+    description: "For regular coursework and longer recordings.",
     features: [
-      "The same supported tools as Free",
-      "Higher provisional study allowances",
-      "User-initiated QR Ph renewal",
+      "10 hours of media processing",
+      "500 document pages",
+      "300 study-chat questions per month",
     ],
-    href: "/sign-in?next=%2Fbilling",
-    action: "View the paid plan",
+    href: "/billing",
+    action: "Choose Pro",
   },
 ] as const
 
 export default function PricingPage() {
-  const beta = isProductionRelease()
-  const availablePlans = beta ? plans.slice(0, 1) : plans
+  const checkoutAvailable = isPolarBillingConfigured()
   return (
     <PublicPage
       active="pricing"
       title="Start free. Find your pace."
-      description={
-        beta
-          ? "Bring your materials, understand them, practise and return to review. The public beta is free."
-          : "Bring your materials, understand them, practise and return to review. Free and Paid include the same supported tools with different usage allowances."
-      }
+      description="Start with Free or choose Pro for a larger monthly allowance."
     >
-      {!beta && (
-        <Alert className="rounded-2xl">
-          <AlertTitle>Development pricing</AlertTitle>
-          <AlertDescription>
-            Checkout currently uses sandbox/test mode. Public launch and live
-            customer payments are pending. Allowances are provisional and
-            subject to validation before launch.
-          </AlertDescription>
-        </Alert>
-      )}
-      <div className={beta ? "max-w-sm" : "grid gap-5 sm:grid-cols-2"}>
-        {availablePlans.map((plan) => (
+      <div className="grid gap-5 sm:grid-cols-2">
+        {plans.map((plan) => (
           <Card
             key={plan.name}
             className="rounded-3xl py-8 shadow-none [--card-spacing:--spacing(8)]"
@@ -108,16 +89,26 @@ export default function PricingPage() {
               </ul>
             </CardContent>
             <CardFooter className="mt-auto border-0 bg-transparent pt-0">
-              <Button
-                variant={plan.name === "Free" ? "default" : "outline"}
-                render={
-                  <Link href={workspaceHref(plan.href)} prefetch={false} />
-                }
-                nativeButton={false}
-                className="h-11 w-full rounded-full"
-              >
-                {plan.action}
-              </Button>
+              {plan.name === "Pro" && !checkoutAvailable ? (
+                <Button
+                  disabled
+                  variant="outline"
+                  className="h-11 w-full rounded-full"
+                >
+                  Checkout unavailable
+                </Button>
+              ) : (
+                <Button
+                  variant={plan.name === "Free" ? "outline" : "default"}
+                  render={
+                    <Link href={workspaceHref(plan.href)} prefetch={false} />
+                  }
+                  nativeButton={false}
+                  className="h-11 w-full rounded-full"
+                >
+                  {plan.action}
+                </Button>
+              )}
             </CardFooter>
           </Card>
         ))}
@@ -125,13 +116,12 @@ export default function PricingPage() {
       <div className="flex max-w-3xl flex-col gap-7">
         <PublicSection title="Included study tools">
           <p>
-            Use supported material imports, study chat, summaries, flashcards,
-            quizzes, exams and notes, along with the available visual, practice
-            and narrated study formats. Reviewing saved work and manually
-            editing notes do not use generation allowance.
+            Import course materials, ask questions with citations, and review
+            with notes, flashcards, quizzes or AI-narrated slides. Reviewing
+            saved work and editing notes by hand use no generation allowance.
           </p>
         </PublicSection>
-        <PublicSection title="Allowances being validated">
+        <PublicSection title="Tracking your usage">
           <p>
             Usage limits cover stored files, imported document pages,
             transcription, scanned-page extraction, chat messages and generated
@@ -142,23 +132,21 @@ export default function PricingPage() {
             Plan &amp; Billing after signing in.
           </p>
         </PublicSection>
-        {!beta && (
-          <div id="renewal" className="scroll-mt-28">
-            <PublicSection title="Renew when you choose">
-              <p>
-                Paid access lasts 30 days per verified payment. Each QR Ph
-                payment is initiated by you; there is no automatic debit. An
-                early renewal adds a future 30-day period after your existing
-                paid access.
-              </p>
-              <p>
-                When Paid access ends, the account returns to Free. Saved study
-                work remains available, while new uploads are paused if retained
-                files exceed the Free storage limit.
-              </p>
-            </PublicSection>
-          </div>
-        )}
+        <div id="renewal" className="scroll-mt-28">
+          <PublicSection title="Managing your subscription">
+            <p>
+              Pro renews monthly through Polar. Choose US dollars or Philippine
+              pesos at checkout. You can view invoices, update your payment
+              method and cancel from Plan &amp; Billing.
+            </p>
+            <p>
+              If you cancel, you can use Pro through the end of your paid
+              period. Your account then returns to Free. You can keep reviewing
+              saved work. New uploads pause if your files exceed the Free
+              storage limit.
+            </p>
+          </PublicSection>
+        </div>
       </div>
     </PublicPage>
   )

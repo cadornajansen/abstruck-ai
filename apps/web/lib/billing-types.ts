@@ -14,18 +14,16 @@ export interface BillingContext {
   plan: "free" | "paid"
   planVersion: number
   grantId: string | null
+  hasBillingAccount: boolean
+  subscription: {
+    status: string
+    currentPeriodEnd: string | null
+    cancelAtPeriodEnd: boolean
+  } | null
   periodId: string
   startsAt: string
   endsAt: string
   limits: BillingLimits
-}
-
-export interface BillingGrant {
-  id: string
-  orderId: string
-  startsAt: string
-  endsAt: string
-  state: "active" | "revoked"
 }
 
 export type BillingUsage = Omit<BillingLimits, "concurrentJobs">
@@ -39,33 +37,10 @@ export interface AccountUsage {
     endsAt: string
     grantId: string | null
   }
-  activeUntil: string | null
-  nextPaidStartsAt: string | null
-  paidThrough: string | null
   limits: BillingLimits
   used: BillingUsage
   remaining: BillingUsage
-  grants: BillingGrant[]
-  testMode: true
-  allowancesProvisional: true
-}
-
-export interface BillingOrder {
-  id: string
-  state:
-    | "creating"
-    | "pending"
-    | "paid"
-    | "refunded"
-    | "partially_refunded"
-    | "failed"
-    | "expired"
-    | "review"
-  amount: 19900
-  currency: "PHP"
-  checkoutUrl: string | null
-  createdAt: string
-  paidAt: string | null
-  refundedAt: string | null
-  errorCode: string | null
+  checkoutAvailable: boolean
+  hasBillingAccount: boolean
+  subscription: BillingContext["subscription"]
 }

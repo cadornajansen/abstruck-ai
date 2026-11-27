@@ -2,10 +2,12 @@ import { createServer } from "node:http"
 import { Buffer } from "node:buffer"
 
 // A temporary tunnel can reach only provider callbacks, never the rest of the app.
-const paths = new Set(["/api/webhooks/paymongo", "/api/webhooks/assemblyai"])
+const paths = new Set(["/api/webhooks/polar", "/api/webhooks/assemblyai"])
 const forwardedHeaders = [
   "content-type",
-  "paymongo-signature",
+  "webhook-id",
+  "webhook-timestamp",
+  "webhook-signature",
   "x-assemblyai-webhook-secret",
 ]
 

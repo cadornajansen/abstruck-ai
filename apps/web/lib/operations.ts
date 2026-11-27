@@ -1,13 +1,9 @@
 import "server-only"
 
-import { isProductionRelease } from "@/lib/release"
-import { createHash } from "node:crypto"
+import { isPolarBillingConfigured } from "@/lib/polar-config"
 import type { User } from "@supabase/supabase-js"
 import { getCurrentUser } from "@/lib/auth/session"
 import { createAdminClient } from "@/lib/supabase/admin"
-import { recoverBillingOrder } from "@/lib/billing"
-import { checkoutReferenceSchema } from "@/lib/operations-types"
-import { readTestCheckout as readVerifiedTestCheckout } from "@/lib/paymongo"
 import type { Json } from "@/lib/supabase/database.types"
 import type { OperationsOverview } from "@/lib/operations-types"
 
@@ -151,10 +147,9 @@ export async function getOperationsOverview(): Promise<OperationsOverview> {
         "Configured; provider health was not probed."
       ),
       service(
-        "PayMongo test",
-        !isProductionRelease() &&
-          /^sk_test_/.test(process.env.PAYMONGO_SECRET_KEY ?? ""),
-        "Test mode only; no live reconciliation is allowed."
+        "Polar",
+        isPolarBillingConfigured(),
+        "Hosted checkout and subscription billing are configured."
       ),
       service(
         "Support email",
@@ -184,160 +179,4 @@ export async function retryOperationsJob(
       requestId
     )
   return data as Json
-}
-
-export async function reconcileOperationsPayment(
-  id: string,
-  requestId: string,
-  recoveredCheckoutId?: string
-): Promise<Json> {
-  const actor = await requireFounder(),
-    db = createAdminClient()
-  if (
-    recoveredCheckoutId !== undefined &&
-    !checkoutReferenceSchema.safeParse(recoveredCheckoutId).success
-  )
-    throw new OperationsError(400, "Use a valid PayMongo checkout reference.")
-  const { data: audit, error: auditError } = await db.rpc(
-    "operations_begin_action",
-    {
-      p_actor_id: actor.id,
-      p_request_id: requestId,
-      p_action: "reconcile_payment",
-      p_target_id: id,
-    }
-  )
-  if (auditError || !object(audit)) throw new Error("audit_unavailable")
-  if (audit.status !== "started") {
-    if (audit.status === "succeeded") return audit.details as Json
-    throw new OperationsError(
-      409,
-      "This attempt was recorded. Refresh and start a new explicit reconciliation.",
-      requestId
-    )
-  }
-  try {
-    const { data: order, error } = await db
-      .from("payment_orders")
-      .select("*")
-      .eq("id", id)
-      .maybeSingle()
-    if (error) throw new Error("order_unavailable")
-    if (!order) throw new OperationsError(404, "Order not found.", requestId)
-    if (order.livemode || order.amount !== 19900 || order.currency !== "PHP")
-      throw new OperationsError(
-        409,
-        "This order is not a supported test checkout.",
-        requestId
-      )
-    if (recoveredCheckoutId && order.checkout_id !== recoveredCheckoutId) {
-      if (order.checkout_id)
-        throw new OperationsError(
-          409,
-          "This order already has a different checkout.",
-          requestId
-        )
-      const candidate = { ...order, checkout_id: recoveredCheckoutId }
-      let verified: Awaited<ReturnType<typeof readVerifiedTestCheckout>>
-      try {
-        verified = await readVerifiedTestCheckout(candidate)
-      } catch {
-        throw new OperationsError(
-          409,
-          "That checkout could not be verified against this order.",
-          requestId
-        )
-      }
-      const attached = await db.rpc("attach_billing_checkout", {
-        p_owner_id: order.owner_id,
-        p_order_id: order.id,
-        p_checkout_id: recoveredCheckoutId,
-        p_checkout_url: verified.url,
-      })
-      if (attached.error || !attached.data)
-        throw new OperationsError(
-          409,
-          "This order changed. Refresh before recovering it.",
-          requestId
-        )
-      await recoverBillingOrder(order.owner_id, order.id, "check")
-      order.checkout_id = recoveredCheckoutId
-    }
-    if (!order.checkout_id)
-      throw new OperationsError(
-        409,
-        "Find this order in PayMongo by its ABSTRUCK-order reference, then enter the original checkout ID.",
-        requestId
-      )
-    const checkout = await readVerifiedTestCheckout(order)
-    let outcome = "pending"
-    if (checkout.paidEvent) {
-      const event = checkout.paidEvent
-      const hash = createHash("sha256")
-        .update(JSON.stringify(event))
-        .digest("hex")
-      const applied = await db.rpc("process_billing_event", {
-        p_event: event as unknown as Json,
-        p_body_sha256: hash,
-      })
-      if (
-        applied.error ||
-        !object(applied.data) ||
-        applied.data.error ||
-        applied.data.reconciliationRequired
-      )
-        throw new OperationsError(
-          409,
-          "The verified payment needs review; no new access was assumed.",
-          requestId
-        )
-      outcome = "reconciled"
-    }
-    const current = await db
-      .from("payment_orders")
-      .select("state")
-      .eq("id", id)
-      .single()
-    if (current.error) throw new Error("order_unavailable")
-    if (
-      outcome === "reconciled" &&
-      !["paid", "refunded", "partially_refunded"].includes(current.data.state)
-    )
-      throw new OperationsError(
-        409,
-        "This verified payment still needs order review. No access grant was assumed.",
-        requestId
-      )
-    const result = {
-      orderId: id,
-      state: current.data.state,
-      outcome,
-      auditId: requestId,
-      testMode: true,
-    }
-    const saved = await db.rpc("operations_finish_action", {
-      p_request_id: requestId,
-      p_status: "succeeded",
-      p_details: result,
-    })
-    if (saved.error || !saved.data)
-      throw new Error("audit_checkpoint_unavailable")
-    return result
-  } catch (error) {
-    await db.rpc("operations_finish_action", {
-      p_request_id: requestId,
-      p_status: "failed",
-      p_details: { orderId: id, testMode: true },
-      p_error:
-        error instanceof OperationsError
-          ? `reconciliation_${error.status}`
-          : "reconciliation_unavailable",
-    })
-    if (error instanceof OperationsError) throw error
-    throw new OperationsError(
-      503,
-      "The reconciliation could not be completed. Keep its audit reference.",
-      requestId
-    )
-  }
 }

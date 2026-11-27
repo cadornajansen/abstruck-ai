@@ -1,5 +1,5 @@
 import { getCurrentUser } from "@/lib/auth/session"
-import { billingFailure, billingHeaders, getAccountUsage } from "@/lib/billing"
+import { billingHeaders, getAccountUsage } from "@/lib/billing"
 
 export const runtime = "nodejs"
 
@@ -14,7 +14,10 @@ export async function GET(): Promise<Response> {
     return Response.json(await getAccountUsage(user.id), {
       headers: billingHeaders,
     })
-  } catch (error) {
-    return billingFailure(error)
+  } catch {
+    return Response.json(
+      { error: "Your billing usage is temporarily unavailable." },
+      { status: 503, headers: billingHeaders }
+    )
   }
 }

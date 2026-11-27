@@ -1,25 +1,20 @@
 import { marketingMetadata } from "@/components/marketing/metadata"
 import Link from "next/link"
-import { isProductionRelease, workspaceHref } from "@/lib/release"
+import { workspaceHref } from "@/lib/release"
 import { PublicPage, PublicSection } from "@/components/public-page"
 
 export const metadata = marketingMetadata(
   "Terms",
-  "Terms for using the Abstruck study workspace, including content ownership, study outputs, provisional plans and account controls.",
+  "Terms for using the Abstruck study workspace, including content ownership, study outputs, subscriptions and account controls.",
   "/terms"
 )
 
 export default function TermsPage() {
-  const beta = isProductionRelease()
   return (
     <PublicPage
       active="terms"
       title="Terms of use"
-      description={
-        beta
-          ? "These terms describe the Abstruck public beta. Updated November 18, 2026."
-          : "These terms describe the current development MVP. Public launch and live customer payments remain pending. Updated November 3, 2026."
-      }
+      description="These terms cover Free and Pro accounts. Updated November 27, 2026."
     >
       <div className="flex max-w-3xl flex-col gap-8">
         <PublicSection title="Using the workspace">
@@ -60,51 +55,39 @@ export default function TermsPage() {
             to retain.
           </p>
         </PublicSection>
-        {beta ? (
-          <PublicSection title="Free beta access">
-            <p>
-              Abstruck is free during the beta. View your current usage
-              allowances in Settings → Plan &amp; Billing.
-            </p>
-          </PublicSection>
-        ) : (
-          <PublicSection title="Free and Paid access">
-            <p>
-              Free is an ongoing plan. The Paid plan is ₱199 for 30 days, with
-              the same supported tools and higher provisional usage allowances.
-              Numeric allowances are subject to cost and product validation;
-              current development limits are visible in Settings → Plan &amp;
-              Billing.
-            </p>
-            <p>
-              Each QR Ph renewal is initiated by you. There is no automatic
-              debit. An early renewal starts a future paid period after existing
-              paid access expires. When Paid access ends, the account returns to
-              Free; new uploads can pause if retained files exceed Free storage
-              limits.
-            </p>
-            <p>
-              Current checkout is sandbox/test mode. Live-payment and refund
-              terms must be finalized before accepting live customer payments.
-              Use{" "}
-              <Link
-                href={workspaceHref("/support")}
-                prefetch={false}
-                className="text-foreground underline underline-offset-4"
-              >
-                Support
-              </Link>{" "}
-              with an order reference for a payment-status question. See{" "}
-              <Link
-                href="/pricing"
-                className="text-foreground underline underline-offset-4"
-              >
-                Pricing
-              </Link>{" "}
-              for the current plan description.
-            </p>
-          </PublicSection>
-        )}
+        <PublicSection title="Free and Pro access">
+          <p>
+            Free is an ongoing plan. Pro is a monthly subscription sold through
+            Polar, our merchant of record. Your checkout shows the price,
+            currency, and any applicable taxes before you subscribe.
+          </p>
+          <p>
+            Pro renews automatically until you cancel. Open Settings → Plan
+            &amp; Billing to manage your payment method, download invoices, or
+            cancel through Polar. When you cancel, you keep Pro access through
+            the end of the paid period, then return to Free. Your saved study
+            work stays available.
+          </p>
+          <p>
+            See{" "}
+            <Link
+              href="/pricing"
+              className="text-foreground underline underline-offset-4"
+            >
+              Pricing
+            </Link>{" "}
+            for current allowances. For a billing question or refund request,
+            contact{" "}
+            <Link
+              href={workspaceHref("/support")}
+              prefetch={false}
+              className="text-foreground underline underline-offset-4"
+            >
+              Abstruck Support
+            </Link>{" "}
+            with your invoice reference.
+          </p>
+        </PublicSection>
         <PublicSection title="Sharing, export and account removal">
           <p>
             A share link discloses a selected saved snapshot and any originals

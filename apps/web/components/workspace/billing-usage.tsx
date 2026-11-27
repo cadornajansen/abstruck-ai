@@ -14,27 +14,8 @@ import { Skeleton } from "@workspace/ui/components/skeleton"
 import { cn } from "@workspace/ui/lib/utils"
 import type { AccountUsage, BillingUsage } from "@/lib/billing-types"
 
-export async function billingRequest<T>(
-  path: string,
-  init?: RequestInit
-): Promise<T> {
-  const response = await fetch(path, {
-    ...init,
-    headers: { "Content-Type": "application/json", ...init?.headers },
-  })
-  let data: T & { error?: string }
-  try {
-    data = await response.json()
-  } catch {
-    throw new Error("We couldn’t read your billing status. Please try again.")
-  }
-  if (!response.ok)
-    throw new Error(
-      data.error ??
-        "Your billing request could not be completed. Please try again."
-    )
-  return data
-}
+import { billingRequest } from "./billing-request"
+import { BillingCheckout } from "./billing-checkout"
 
 export function billingDate(value: string): string {
   return new Date(value).toLocaleDateString("en-PH", {
@@ -44,12 +25,21 @@ export function billingDate(value: string): string {
   })
 }
 
-export function billingAmount(centavos: number): string {
-  return new Intl.NumberFormat("en-PH", {
-    style: "currency",
-    currency: "PHP",
-    maximumFractionDigits: 0,
-  }).format(centavos / 100)
+export function subscriptionSummary(usage: AccountUsage): string {
+  const subscription = usage.subscription
+  if (subscription?.status === "past_due")
+    return "Your renewal payment needs attention. Update your payment method in Polar."
+  if (subscription?.status === "paused")
+    return "Your subscription is paused. View its status in Polar."
+  if (usage.plan === "paid" && subscription?.currentPeriodEnd) {
+    const date = billingDate(subscription.currentPeriodEnd)
+    return subscription.cancelAtPeriodEnd
+      ? `Your Pro access ends ${date}.`
+      : `Your next renewal is ${date}.`
+  }
+  return usage.plan === "paid"
+    ? "Your Pro study allowances are active."
+    : "Your Free study allowances are active."
 }
 
 function storageSize(bytes: number): string {
@@ -203,13 +193,11 @@ export function BillingUsagePanel({
       </dl>
       <p className="text-xs leading-5 text-muted-foreground">
         Storage counts your retained files. Scanned pages also count as document
-        pages. Up to {usage.limits.concurrentJobs} items can process at once.
+        pages.{" "}
+        {usage.limits.concurrentJobs === 1
+          ? "One item can process at a time."
+          : `Up to ${usage.limits.concurrentJobs} items can process at once.`}
       </p>
-      {usage.allowancesProvisional && (
-        <p className="text-xs text-muted-foreground">
-          Test allowances may change before launch.
-        </p>
-      )}
     </section>
   )
 }
@@ -255,28 +243,28 @@ export function BillingSettingsPanel({
           <div className="flex items-center justify-between gap-4 border-b pb-4">
             <div>
               <h2 className="text-sm font-medium">
-                {usage.plan === "paid" ? "Paid Plan" : "Upgrade"}
+                {usage.plan === "paid" ? "Abstruck Pro" : "Free plan"}
               </h2>
               <p className="mt-1 text-xs text-muted-foreground">
-                {usage.activeUntil
-                  ? `Current paid period ends ${billingDate(usage.activeUntil)}`
-                  : "You are currently on the Free Plan"}
+                {subscriptionSummary(usage)}
               </p>
             </div>
-            <Button
-              render={<Link href="/billing" />}
-              nativeButton={false}
-              className="rounded-xl"
-            >
-              {usage.plan === "paid" ? "Plan & usage" : "Upgrade Plan"}
-            </Button>
+            {usage.hasBillingAccount ? (
+              <BillingCheckout
+                action="portal"
+                disabled={!usage.checkoutAvailable || !!error}
+              />
+            ) : (
+              <Button
+                render={<Link href="/billing" />}
+                nativeButton={false}
+                variant="outline"
+                className="rounded-xl"
+              >
+                View plans
+              </Button>
+            )}
           </div>
-          {usage.nextPaidStartsAt && (
-            <p className="text-sm text-muted-foreground">
-              Your next prepaid period starts{" "}
-              {billingDate(usage.nextPaidStartsAt)}.
-            </p>
-          )}
           <BillingUsagePanel usage={usage} compact />
         </>
       )}
@@ -300,7 +288,7 @@ export function BillingPlanBadge({
           ? "Plan unavailable"
           : usage
             ? usage.plan === "paid"
-              ? "Paid Plan"
+              ? "Pro"
               : "Free Plan"
             : "Loading plan…"}
     </Badge>

@@ -56,13 +56,13 @@ const paymentCopy = {
     icon: Clock,
   },
   confirmed: {
-    title: "Your paid plan is active",
+    title: "Your Pro plan is active",
     text: "Your payment was confirmed. Your current study period is ready to use.",
     icon: CheckCircle,
   },
   renewed: {
     title: "Your next study period is ready",
-    text: "Your renewal starts when your current paid period ends. Your current allowance has not reset early.",
+    text: "Polar confirmed the renewal. Your next monthly allowance is available.",
     icon: CheckCircle,
   },
   expired: {
@@ -77,7 +77,7 @@ const paymentCopy = {
   },
   refunded: {
     title: "This payment was refunded",
-    text: "Access from this payment has ended. Your saved study content remains available.",
+    text: "View the refund in your billing portal. Your plan status appears below.",
     icon: CheckCircle,
   },
 } as const
@@ -88,12 +88,12 @@ const allowanceRows = [
     label: "Imported document pages",
     used: 20,
     free: 50,
-    paid: 1000,
+    paid: 500,
     unit: "pages",
   },
-  { label: "Transcription", used: 4, free: 10, paid: 300, unit: "minutes" },
+  { label: "Transcription", used: 4, free: 10, paid: 600, unit: "minutes" },
   { label: "OCR pages", used: 2, free: 5, paid: 100, unit: "pages" },
-  { label: "Chat messages", used: 8, free: 20, paid: 500, unit: "messages" },
+  { label: "Chat messages", used: 8, free: 20, paid: 300, unit: "messages" },
   { label: "Generated study sets", used: 1, free: 3, paid: 100, unit: "sets" },
 ] as const
 
@@ -117,7 +117,7 @@ export function BillingPreview({ state }: { state: BillingState }) {
           </p>
         </div>
         <Badge variant="outline" className="h-7 px-3">
-          {paid ? "Paid Plan" : "Free Plan"}
+          {paid ? "Pro" : "Free Plan"}
         </Badge>
       </div>
       {payment && PaymentIcon && (
@@ -160,13 +160,13 @@ export function BillingPreview({ state }: { state: BillingState }) {
             ],
           },
           {
-            name: "Paid Plan",
-            price: "₱199",
-            period: "per 30 days",
+            name: "Pro",
+            price: "US$6.99",
+            period: "or ₱199 per month",
             features: [
               "Every study tool",
               "Higher study allowances",
-              "Customer-initiated QR Ph renewal",
+              "Monthly subscription through Polar",
             ],
           },
         ].map((plan, index) => (
@@ -205,7 +205,7 @@ export function BillingPreview({ state }: { state: BillingState }) {
                     ? "Available when paid access expires"
                     : "Current plan"
                   : paid
-                    ? "Renew for 30 days"
+                    ? "Manage billing"
                     : "Upgrade"}
               </Button>
             </CardContent>
@@ -213,19 +213,18 @@ export function BillingPreview({ state }: { state: BillingState }) {
         ))}
       </div>
       <p className="mt-4 text-xs leading-6 text-muted-foreground">
-        No automatic debit. Each renewal is a new payment you choose to make.
-        Early renewal preserves the time remaining in your current paid period.
+        Pro renews monthly. You can update your payment method or cancel through
+        the billing portal.
       </p>
       <section className="mt-12">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl">Your allowance</h2>
           <span className="text-xs text-muted-foreground">
-            Illustrative 30-day period
+            Sample billing period
           </span>
         </div>
         <p className="mt-3 text-xs leading-6 text-muted-foreground">
-          Development figures below use provisional cost-test limits. They are
-          not published plan promises or live usage.
+          These figures show sample usage for this billing period.
         </p>
         <div className="mt-5 grid gap-x-10 gap-y-7 sm:grid-cols-2">
           {allowanceRows.map((row) => {
@@ -285,7 +284,7 @@ export function BillingPreview({ state }: { state: BillingState }) {
                   <TableCell className="capitalize">
                     {state === "paid" ? "confirmed" : state}
                   </TableCell>
-                  <TableCell>30 days</TableCell>
+                  <TableCell>Monthly</TableCell>
                 </TableRow>
               )}
             </TableBody>
@@ -307,16 +306,18 @@ export function BillingPreview({ state }: { state: BillingState }) {
         <DialogContent className="rounded-3xl sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {paid ? "Renew your paid plan" : "Upgrade your study plan"}
+              {paid
+                ? "Manage your Pro subscription"
+                : "Upgrade your study plan"}
             </DialogTitle>
             <DialogDescription>
-              ₱199 for 30 days. Pay with QR Ph through hosted checkout.
+              US$6.99 or ₱199 per month through Polar.
             </DialogDescription>
           </DialogHeader>
           <div className="rounded-2xl bg-muted/50 p-4 text-sm leading-6">
             <p>
               {paid
-                ? "The next period begins after your current paid access expires."
+                ? "The billing portal lets you manage your payment method, invoices and subscription."
                 : "Your paid period begins after payment is confirmed."}
             </p>
             <p className="mt-2">
@@ -331,7 +332,7 @@ export function BillingPreview({ state }: { state: BillingState }) {
             </AlertDescription>
           </Alert>
           <Button disabled className="h-11 rounded-xl">
-            Continue to QR Ph checkout
+            {paid ? "Open billing portal" : "Continue to Polar checkout"}
           </Button>
           <Button variant="ghost" onClick={() => setCheckout(false)}>
             Back to plans

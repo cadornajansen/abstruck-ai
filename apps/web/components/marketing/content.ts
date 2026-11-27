@@ -42,7 +42,7 @@ export const roadmapItems = [
   {
     title: "Clear usage and renewal",
     detail:
-      "Validate plan allowances, payment recovery and the customer-initiated QR Ph renewal journey.",
+      "Review usage allowances, subscription renewals and payment recovery.",
     status: "In validation",
   },
   {

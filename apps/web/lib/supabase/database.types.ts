@@ -1115,32 +1115,161 @@ export type Database = {
       plans: {
         Row: {
           code: string
-          currency: string
-          duration_days: number
+          currency: string | null
+          duration_days: number | null
           id: string
           limits: Json
-          price_centavos: number
+          price_centavos: number | null
           version: number
         }
         Insert: {
           code: string
-          currency?: string
-          duration_days?: number
+          currency?: string | null
+          duration_days?: number | null
           id?: string
           limits: Json
-          price_centavos: number
+          price_centavos?: number | null
           version?: number
         }
         Update: {
           code?: string
-          currency?: string
-          duration_days?: number
+          currency?: string | null
+          duration_days?: number | null
           id?: string
           limits?: Json
-          price_centavos?: number
+          price_centavos?: number | null
           version?: number
         }
         Relationships: []
+      }
+      polar_checkouts: {
+        Row: {
+          checkout_id: string | null
+          created_at: string
+          currency: string
+          environment: string
+          expires_at: string
+          id: string
+          owner_id: string
+          state: string
+          url: string | null
+        }
+        Insert: {
+          checkout_id?: string | null
+          created_at?: string
+          currency: string
+          environment: string
+          expires_at?: string
+          id?: string
+          owner_id: string
+          state?: string
+          url?: string | null
+        }
+        Update: {
+          checkout_id?: string | null
+          created_at?: string
+          currency?: string
+          environment?: string
+          expires_at?: string
+          id?: string
+          owner_id?: string
+          state?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "polar_checkouts_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      polar_customers: {
+        Row: {
+          cancel_at_period_end: boolean
+          customer_id: string
+          environment: string
+          observed_at: string
+          owner_id: string
+          period_end: string | null
+          period_start: string | null
+          status: string | null
+          subscription_id: string | null
+        }
+        Insert: {
+          cancel_at_period_end?: boolean
+          customer_id: string
+          environment: string
+          observed_at: string
+          owner_id: string
+          period_end?: string | null
+          period_start?: string | null
+          status?: string | null
+          subscription_id?: string | null
+        }
+        Update: {
+          cancel_at_period_end?: boolean
+          customer_id?: string
+          environment?: string
+          observed_at?: string
+          owner_id?: string
+          period_end?: string | null
+          period_start?: string | null
+          status?: string | null
+          subscription_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "polar_customers_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      polar_runtime: {
+        Row: {
+          environment: string
+          singleton: boolean
+        }
+        Insert: {
+          environment: string
+          singleton?: boolean
+        }
+        Update: {
+          environment?: string
+          singleton?: boolean
+        }
+        Relationships: []
+      }
+      polar_sync_events: {
+        Row: {
+          environment: string
+          event_id: string
+          owner_id: string
+        }
+        Insert: {
+          environment: string
+          event_id: string
+          owner_id: string
+        }
+        Update: {
+          environment?: string
+          event_id?: string
+          owner_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "polar_sync_events_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       processing_jobs: {
         Row: {
@@ -1870,15 +1999,6 @@ export type Database = {
         Returns: Json
       }
       assessment_normalize: { Args: { p_text: string }; Returns: string }
-      attach_billing_checkout: {
-        Args: {
-          p_checkout_id: string
-          p_checkout_url: string
-          p_order_id: string
-          p_owner_id: string
-        }
-        Returns: boolean
-      }
       begin_chat_retrieval: {
         Args: { p_owner_id: string; p_request_id: string }
         Returns: Json
@@ -2014,15 +2134,6 @@ export type Database = {
         Returns: boolean
       }
       claim_account_data_job: { Args: never; Returns: Json }
-      claim_billing_order_operation: {
-        Args: {
-          p_action: string
-          p_key_hash: string
-          p_order_id: string
-          p_owner_id: string
-        }
-        Returns: Json
-      }
       claim_material_before_index: {
         Args: { p_visibility_seconds?: number }
         Returns: {
@@ -2088,19 +2199,6 @@ export type Database = {
       confirm_normalized_pdf: {
         Args: { p_job_id: string; p_lease_token: string; p_sha256: string }
         Returns: boolean
-      }
-      create_billing_checkout_order: {
-        Args: {
-          p_app_origin: string
-          p_key_hash: string
-          p_owner_id: string
-          p_request_id: string
-        }
-        Returns: Json
-      }
-      create_billing_order: {
-        Args: { p_owner_id: string; p_request_id: string }
-        Returns: Json
       }
       create_material_annotation: {
         Args: {
@@ -2246,16 +2344,6 @@ export type Database = {
           p_job_id: string
           p_lease_token: string
           p_uncertain: boolean
-        }
-        Returns: boolean
-      }
-      finish_billing_order_operation: {
-        Args: {
-          p_error?: string
-          p_order_id: string
-          p_outcome?: string
-          p_owner_id: string
-          p_token: string
         }
         Returns: boolean
       }
@@ -2410,10 +2498,6 @@ export type Database = {
         Args: { p_owner_id: string; p_pinned: boolean; p_space_id: string }
         Returns: Json
       }
-      process_billing_event: {
-        Args: { p_body_sha256: string; p_event: Json }
-        Returns: Json
-      }
       queue_assessment_grading: {
         Args: {
           p_answer_ids: string[]
@@ -2522,6 +2606,33 @@ export type Database = {
           p_question_id: string
         }
         Returns: Json
+      }
+      polar_finish_checkout: {
+        Args: {
+          p_checkout_id?: string
+          p_environment: string
+          p_expires_at?: string
+          p_id: string
+          p_owner_id: string
+          p_state: string
+          p_url?: string
+        }
+        Returns: boolean
+      }
+      polar_reserve_checkout: {
+        Args: { p_currency: string; p_environment: string; p_owner_id: string }
+        Returns: Json
+      }
+      polar_sync_subscription: {
+        Args: {
+          p_customer_id: string
+          p_environment: string
+          p_event_id: string
+          p_observed_at: string
+          p_owner_id: string
+          p_subscription: Json
+        }
+        Returns: boolean
       }
       request_account_data: {
         Args: {

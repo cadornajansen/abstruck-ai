@@ -1,13 +1,3 @@
-import { z } from "zod"
-
-export const checkoutReferenceSchema = z
-  .string()
-  .trim()
-  .regex(
-    /^cs_[A-Za-z0-9]{3,100}$/,
-    "Enter a PayMongo checkout ID starting with cs_."
-  )
-
 export interface OperationsJob {
   id: string
   ownerId: string

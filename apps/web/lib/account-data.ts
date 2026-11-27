@@ -3,6 +3,8 @@ import { cookies } from "next/headers"
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3"
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import { getCurrentUser } from "@/lib/auth/session"
+import { refreshPolarBilling } from "@/lib/polar-billing"
+import { isPolarBillingConfigured } from "@/lib/polar-config"
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import type { Tables } from "@/lib/supabase/database.types"
@@ -24,6 +26,8 @@ const messages: Record<string, string> = {
     "This account exceeds the current export size limit. Contact support for help.",
   export_disk_space:
     "The export could not be prepared. Please try again later.",
+  billing_must_close:
+    "Manage billing before deleting your account. Finish or close any open checkout, and wait for your canceled subscription to end.",
   account_deleting: "Account deletion has already been accepted.",
   storage_cleanup_pending:
     "File cleanup will be retried. Keep this request reference if you contact support.",
@@ -230,6 +234,9 @@ export async function accountDataPost(
         { status: 401, headers }
       )
     }
+    if (kind === "deletion" && isPolarBillingConfigured()) {
+      await refreshPolarBilling(user.id)
+    }
     const result = await createAdminClient().rpc("request_account_data", {
       p_owner_id: user.id,
       p_request_id: body.requestId,
@@ -302,6 +309,7 @@ function accountDataFailure(error: unknown): Response {
       : code.includes("material_not_found")
         ? 404
         : code.includes("request_conflict") ||
+            code.includes("billing_must_close") ||
             code.includes("export_in_progress") ||
             code.includes("account_deleting")
           ? 409

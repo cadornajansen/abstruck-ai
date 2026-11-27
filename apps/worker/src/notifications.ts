@@ -153,7 +153,7 @@ async function maintenanceEmailEnvelope(
       subject: expired
         ? "Your Abstruck paid period has ended"
         : "Your Abstruck paid period is ending soon",
-      text: `Your paid access ${expired ? "ended" : "ends"} on ${expiry.toISOString()} (UTC).\n\n${expired ? "Your account now uses Free allowances. Your study content is preserved. New uploads are blocked if your retained files exceed the Free storage allowance." : "You can renew when you are ready. Early renewal starts after your existing paid access ends."}\n\nEvery renewal is a payment you initiate. There is no automatic debit. Checkout is currently in test mode; no live payment is available.\n\nView your plan and renewal options: ${new URL("/billing", origin.origin).href}\n\nReference: ${delivery.id}`,
+      text: `Your paid access ${expired ? "ended" : "ends"} on ${expiry.toISOString()} (UTC).\n\n${expired ? "Your account now uses Free allowances. Your study content is preserved. New uploads are blocked if your retained files exceed the Free storage allowance." : "Visit Plan & Billing to review your subscription."}\n\nView your plan and renewal options: ${new URL("/billing", origin.origin).href}\n\nReference: ${delivery.id}`,
     }
   }
   const founders = (process.env.ABSTRUCK_ADMIN_USER_IDS ?? "")

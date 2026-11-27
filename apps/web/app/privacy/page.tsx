@@ -15,11 +15,7 @@ export default function PrivacyPage() {
     <PublicPage
       active="privacy"
       title="Privacy notice"
-      description={
-        beta
-          ? "This notice describes how the Abstruck public beta handles your data. Updated November 18, 2026."
-          : "This notice describes the current Abstruck development MVP. Public launch, final retention schedules and wider operational validation are still pending. Updated November 3, 2026."
-      }
+      description="How Abstruck handles workspace and billing data. Updated November 27, 2026."
     >
       <div className="flex max-w-3xl flex-col gap-8">
         <PublicSection title="Data used by your workspace">
@@ -32,11 +28,10 @@ export default function PrivacyPage() {
           </p>
           <p>
             It also records usage, processing status and errors, access periods,
-            sharing settings and support requests.
-            {!beta &&
-              " The development workspace also records test payment references."}
-            Authentication uses cookies, and the interface stores some local
-            display preferences, such as the selected list or grid view.
+            sharing settings and support requests. For subscriptions, it also
+            records billing identifiers, status and period dates. Authentication
+            uses cookies, and the interface stores some local display
+            preferences, such as the selected list or grid view.
           </p>
         </PublicSection>
         <PublicSection title="Processing and service providers">
@@ -76,15 +71,13 @@ export default function PrivacyPage() {
               request includes your message and the verified account reply
               address.
             </li>
-            {!beta && (
-              <li>
-                <strong className="font-medium text-foreground">
-                  PayMongo
-                </strong>{" "}
-                provides hosted QR Ph checkout and payment status. Current
-                checkout is sandbox/test mode.
-              </li>
-            )}
+            <li>
+              <strong className="font-medium text-foreground">Polar</strong>{" "}
+              handles checkout, payments, invoices and subscriptions. We share
+              your account identifier and sign-in email to connect the
+              subscription to your workspace. You enter payment details directly
+              with Polar.
+            </li>
           </ul>
           <p>
             {beta
@@ -131,13 +124,12 @@ export default function PrivacyPage() {
           </p>
           <p>
             Abstruck retains minimal deletion receipts and operations audit
-            entries after account removal.
-            {!beta &&
-              " The development workspace also retains test payment-event evidence."}{" "}
-            These records currently have no automated retention deadline.
-            Private cleanup payloads are cleared after successful cleanup. Email
-            already delivered to a recipient or provider cannot be unsent by
-            deleting the account.
+            entries after account removal. Polar maintains transaction records
+            separately for billing and tax obligations. Abstruck’s operational
+            records currently have no automated retention deadline. Private
+            cleanup payloads are cleared after successful cleanup. Email already
+            delivered to a recipient or provider cannot be unsent by deleting
+            the account.
           </p>
         </PublicSection>
         <PublicSection title="Current limits and questions">

@@ -1,6 +1,12 @@
 # Abstruck public beta deployment
 
-Use main in [cadornajansen/abstruck-ai](https://github.com/cadornajansen/abstruck-ai) for Vercel project `abstruck-app`, root `apps/web`, Node.js 24, and `ENABLE_EXPERIMENTAL_COREPACK=1`. The public beta uses free study allowances. PayMongo test checkout stays available in local development.
+Use main in [cadornajansen/abstruck-ai](https://github.com/cadornajansen/abstruck-ai) for Vercel project `abstruck-app`, root `apps/web`, Node.js 24, and `ENABLE_EXPERIMENTAL_COREPACK=1`.
+
+## Polar subscriptions
+
+- Set `POLAR_ENVIRONMENT=production`, `POLAR_ORGANIZATION_ID=5c60217f-c90c-4eed-ab3d-a7df02c223d1` and `POLAR_PRODUCT_ID=f584f77a-d85f-4a76-aa52-8a2b877b47ce` in Vercel Production. Keep `POLAR_ACCESS_TOKEN` and `POLAR_WEBHOOK_SECRET` in sensitive server variables. The app token needs `checkouts:read`, `checkouts:write`, `customers:read`, `subscriptions:read` and `customer_sessions:write`.
+- Register a raw, Standard Webhooks endpoint on Polar API version `2026-10` at `https://app.abstruck.space/api/webhooks/polar`. Subscribe to `customer.state_changed`, `customer.deleted`, `subscription.updated`, `order.paid`, `order.refunded`, `checkout.created`, `checkout.updated` and `checkout.expired`.
+- For local testing use a separate Supabase database and Polar sandbox organization, product, token and webhook secret. Set `POLAR_ENVIRONMENT=sandbox` in the web app and run `update public.polar_runtime set environment = 'sandbox' where singleton` **only on the sandbox database**. Forward signed sandbox events to the local webhook. Use the Free account’s Upgrade action, complete a sandbox purchase, then cancel through Manage billing and verify the paid-through date. [Polar sandbox](https://polar.sh/docs/integrate/sandbox)
 
 ## Production settings
 
@@ -45,7 +51,7 @@ Run the backup task once using the output `BackupTaskArn` and `BackupSecurityGro
 
 ## Cutover
 
-Keep automatic domain assignment off and Git builds paused during setup. When the providers and worker are ready, stage a Production deployment from the verified main commit with its generated URL protected by Vercel Authentication. Check free pricing and 404 preview routes. Promote that build to assign the public domains. [Staging a Vercel production deployment](https://vercel.com/docs/deployments/managing-deployments#staging-and-promoting-a-production-deployment)
+Keep automatic domain assignment off and Git builds paused during setup. When the providers and worker are ready, stage a Production deployment from the verified main commit with its generated URL protected by Vercel Authentication. Check Free and Pro pricing and 404 preview routes. Promote that build to assign the public domains. [Staging a Vercel production deployment](https://vercel.com/docs/deployments/managing-deployments#staging-and-promoting-a-production-deployment)
 
 Start at [the public landing page](https://www.abstruck.space) in a clean session. Confirm that signup, Google sign-in and password reset stay on [the app](https://app.abstruck.space). Upload one small PDF and one short audio file. After both reach Ready, generate a study set and ask a question with a source citation. If a YouTube link fails, use a file you have permission to upload.
 
