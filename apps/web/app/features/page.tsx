@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { isProductionRelease } from "@/lib/release"
 import { getCurrentUser } from "@/lib/auth/session"
 import { MarketingShell } from "@/components/marketing/marketing-shell"
@@ -10,8 +11,8 @@ import {
 import { marketingMetadata } from "@/components/marketing/metadata"
 
 export const metadata = marketingMetadata(
-  "Study tools, connected",
-  "Bring course materials, follow source citations, keep notes and practise in the Abstruck study workspace.",
+  "Study tools for PDFs, slides and lectures",
+  "Study PDFs, slides and lecture recordings. Follow citations back to a page or timestamp, then practise with flashcards and quizzes.",
   "/features"
 )
 
@@ -30,7 +31,9 @@ export default async function FeaturesPage() {
             <span className="text-muted-foreground">to your next review.</span>
           </h1>
           <p className="mx-auto mt-6 max-w-lg leading-7 text-muted-foreground">
-            Read, ask, write and practise with your materials in one place.
+            Ask questions about your PDFs, slides or lecture recordings. Check a
+            citation against the original, then practise with flashcards and
+            quizzes.
             {!isProductionRelease() &&
               " These capabilities are available in the development workspace."}
           </p>
@@ -61,6 +64,29 @@ export default async function FeaturesPage() {
         <div className="py-16">
           <StudyDemo />
         </div>
+        <nav
+          aria-label="Study guides"
+          className="mx-auto mb-12 flex max-w-3xl flex-wrap justify-center gap-x-6 gap-y-3 px-5 text-sm"
+        >
+          <Link
+            href="/blog/source-aware-workspaces-and-document-study"
+            className="underline underline-offset-4"
+          >
+            Study with PDFs, slides and recordings
+          </Link>
+          <Link
+            href="/blog/turn-notes-into-flashcards-with-ai"
+            className="underline underline-offset-4"
+          >
+            Turn notes into flashcards
+          </Link>
+          <Link
+            href="/blog/active-recall-study-method"
+            className="underline underline-offset-4"
+          >
+            Practise active recall
+          </Link>
+        </nav>
         <FinalCta />
       </main>
     </MarketingShell>

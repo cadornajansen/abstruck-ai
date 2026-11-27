@@ -15,12 +15,17 @@ import {
 import { MarketingShell } from "@/components/marketing/marketing-shell"
 import { LandingContent } from "@/components/marketing/landing"
 import { marketingMetadata } from "@/components/marketing/metadata"
+import { WebsiteStructuredData } from "@/components/marketing/structured-data"
+import { SEARCH_DESCRIPTION, SEARCH_TITLE } from "@/lib/public-seo"
 
-export const metadata = marketingMetadata(
-  "Your study workspace",
-  "Bring your materials, understand, practise and review in one calm workspace.",
-  "/"
-)
+export async function generateMetadata() {
+  if (
+    isProductionRelease() &&
+    (await headers()).get("host") !== MARKETING_HOSTNAME
+  )
+    return { title: "Abstruck — Your study workspace" }
+  return marketingMetadata(SEARCH_TITLE, SEARCH_DESCRIPTION, "/")
+}
 
 export default async function Page() {
   const productionHost = isProductionRelease()
@@ -32,6 +37,7 @@ export default async function Page() {
     if (productionHost === APP_HOSTNAME) redirect("/sign-in")
     return (
       <MarketingShell authState="guest" footerVariant="compact">
+        <WebsiteStructuredData />
         <LandingContent />
       </MarketingShell>
     )

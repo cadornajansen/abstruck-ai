@@ -1,26 +1,55 @@
 import type { Metadata } from "next"
-import { MARKETING_ORIGIN } from "@/lib/release"
+import type { BlogArticle } from "@/lib/blog-catalog"
+import {
+  INDEXED_MARKETING_PATHS,
+  publicUrl,
+  SEARCH_IMAGE,
+} from "@/lib/public-seo"
+import { isProductionRelease } from "@/lib/release"
 
-// Keep local development notices out of search until the launch owner approves indexing.
 export function marketingMetadata(
   title: string,
   description: string,
-  path: string
+  path: string,
+  article?: BlogArticle
 ): Metadata {
-  const url = `${MARKETING_ORIGIN}${path}`
+  const url = publicUrl(path)
+  const index =
+    isProductionRelease() &&
+    (INDEXED_MARKETING_PATHS.has(path) || Boolean(article))
+  const image = publicUrl(article?.image ?? SEARCH_IMAGE)
   return {
     title: `${title} · Abstruck`,
     description,
-    alternates: { canonical: url },
-    robots: { index: false, follow: false },
+    alternates: {
+      canonical: url,
+      ...(article ? { types: { "text/markdown": `${url}.md` } } : {}),
+    },
+    robots: index
+      ? { index: true, follow: true, "max-image-preview": "large" }
+      : { index: false, follow: false },
     openGraph: {
       title,
       description,
       url,
       siteName: "Abstruck",
-      type: "website",
-      images: [{ url: `${MARKETING_ORIGIN}/icon.png`, alt: "Abstruck" }],
+      images: [
+        { url: image, alt: article?.title ?? "The Abstruck study workspace" },
+      ],
+      ...(article
+        ? {
+            type: "article",
+            publishedTime: article.publishedAt,
+            modifiedTime: article.updatedAt,
+            authors: [article.author],
+          }
+        : { type: "website" }),
     },
-    twitter: { card: "summary", title, description },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [image],
+    },
   }
 }

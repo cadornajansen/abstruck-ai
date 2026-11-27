@@ -6,6 +6,10 @@ const nextConfig: NextConfig = {
   experimental: {
     agentUpgrade: "security",
   },
+  outputFileTracingIncludes: {
+    "/blog/*": ["./content/blog/*.md"],
+    "/agent-content/blog/*": ["./content/blog/*.md"],
+  },
   transpilePackages: ["@workspace/ui"],
 }
 

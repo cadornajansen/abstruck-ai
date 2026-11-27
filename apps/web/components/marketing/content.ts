@@ -3,7 +3,10 @@ export interface MarketingArticle {
   title: string
   description: string
   publishedAt: string | null
-  sections: { heading: string; text: string }[]
+  updatedAt?: string
+  author?: string
+  image?: string
+  markdown: string
 }
 export const articleDraft: MarketingArticle = {
   slug: "from-material-to-review",
@@ -11,23 +14,18 @@ export const articleDraft: MarketingArticle = {
   description:
     "A short walkthrough of the study flow Abstruck is being built around.",
   publishedAt: null,
-  sections: [
-    {
-      heading: "Begin with one material",
-      text: "Choose a reading, a slide deck or a recording you are working through. Keep the original available so you can check the details.",
-    },
-    {
-      heading: "Ask one focused question",
-      text: "Name the concept you want to understand. In Abstruck’s development workspace, material-based answers include citations you can follow back to the source. Check those passages rather than assuming the answer is correct.",
-    },
-    {
-      heading: "Make a note and try recalling it",
-      text: "Write the idea in your own words. Use a flashcard or a practice question to see what you can explain, then return to the material for anything you missed.",
-    },
-  ],
+  markdown: `## Begin with one material
+
+Choose a reading, a slide deck or a recording you are working through. Keep the original available so you can check the details.
+
+## Ask one focused question
+
+Name the concept you want to understand. In Abstruck’s development workspace, material-based answers include citations you can follow back to the source.
+
+## Make a note and try recalling it
+
+Write the idea in your own words. Use a flashcard or a practice question to see what you can explain, then return to the material for anything you missed.`,
 }
-// Only reviewed, dated entries belong here. The template fixture is deliberately unpublished.
-export const publishedArticles: MarketingArticle[] = []
 export interface ChangelogEntry {
   date: string
   title: string

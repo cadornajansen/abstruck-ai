@@ -14,6 +14,7 @@ const geist = Geist({
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
 
 export const metadata: Metadata = {
+  robots: { index: false, follow: false },
   title: "Abstruck — Your study workspace",
   description:
     "Bring your materials, understand them, practise and return to review.",
