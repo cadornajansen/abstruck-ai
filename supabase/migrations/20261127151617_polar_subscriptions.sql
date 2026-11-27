@@ -236,11 +236,6 @@ drop function public.create_billing_checkout_order(uuid,uuid,text,text),
   public.create_billing_order(uuid,uuid), public.attach_billing_checkout(uuid,uuid,text,text),
   public.process_billing_event(jsonb,text);
 
--- Some development databases ran the unpublished Kelviq sandbox integration.
-drop trigger if exists kelviq_fence_account_deletion on public.account_data_requests;
-drop function if exists public.kelviq_fence_account_deletion(), public.kelviq_reserve_checkout(uuid,text,text,text),
-  public.kelviq_finish_checkout(uuid,uuid,text,text,text,text), public.kelviq_sync_subscription(uuid,text,text,text,jsonb,uuid,jsonb);
-
 revoke all on function public.polar_fence_deletion(), public.polar_reserve_checkout(uuid,text,text),
   public.polar_finish_checkout(uuid,text,uuid,text,uuid,text,timestamptz),
   public.polar_sync_subscription(uuid,text,uuid,text,timestamptz,jsonb) from public,anon,authenticated;
