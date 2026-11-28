@@ -1,9 +1,10 @@
 import { getCurrentUser } from "@/lib/auth/session"
 import { billingHeaders, getAccountUsage } from "@/lib/billing"
+import { getPricingCurrency } from "@/lib/pricing"
 
 export const runtime = "nodejs"
 
-export async function GET(): Promise<Response> {
+export async function GET(request: Request): Promise<Response> {
   const user = await getCurrentUser()
   if (!user)
     return Response.json(
@@ -11,9 +12,13 @@ export async function GET(): Promise<Response> {
       { status: 401, headers: billingHeaders }
     )
   try {
-    return Response.json(await getAccountUsage(user.id), {
-      headers: billingHeaders,
-    })
+    const usage = await getAccountUsage(user.id)
+    return Response.json(
+      { ...usage, defaultCurrency: getPricingCurrency(request.headers) },
+      {
+        headers: billingHeaders,
+      }
+    )
   } catch {
     return Response.json(
       { error: "Your billing usage is temporarily unavailable." },

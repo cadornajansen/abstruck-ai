@@ -1,6 +1,7 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
+  "globalEnv": ["NODE_ENV"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
@@ -19,6 +20,7 @@
       "dependsOn": ["^typecheck"]
     },
     "dev": {
+      "passThroughEnv": ["LOCAL_PRICING_COUNTRY", "LOCAL_POLAR_SANDBOX_PORT"],
       "cache": false,
       "persistent": true
     }

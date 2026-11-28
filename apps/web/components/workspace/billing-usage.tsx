@@ -1,7 +1,6 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import Link from "next/link"
 import { Button } from "@workspace/ui/components/button"
 import { Badge } from "@workspace/ui/components/badge"
 import { Progress } from "@workspace/ui/components/progress"
@@ -13,9 +12,15 @@ import {
 import { Skeleton } from "@workspace/ui/components/skeleton"
 import { cn } from "@workspace/ui/lib/utils"
 import type { AccountUsage, BillingUsage } from "@/lib/billing-types"
+import type { BillingCurrency } from "@/lib/pricing"
 
 import { billingRequest } from "./billing-request"
 import { BillingCheckout } from "./billing-checkout"
+import { CheckoutConfirmation } from "./checkout-confirmation"
+import { UpgradeDialog } from "./upgrade-dialog"
+
+type RegionalUsage = AccountUsage & { defaultCurrency: BillingCurrency }
+export type BillingUsageState = ReturnType<typeof useBillingUsage>
 
 export function billingDate(value: string): string {
   return new Date(value).toLocaleDateString("en-PH", {
@@ -83,7 +88,7 @@ const metrics: {
 ]
 
 export function useBillingUsage(enabled = true) {
-  const [usage, setUsage] = useState<AccountUsage | null>(null)
+  const [usage, setUsage] = useState<RegionalUsage | null>(null)
   const [loading, setLoading] = useState(enabled)
   const [error, setError] = useState("")
   const [revision, setRevision] = useState(0)
@@ -92,7 +97,7 @@ export function useBillingUsage(enabled = true) {
     if (!enabled) return
     const controller = new AbortController()
     setLoading(true)
-    billingRequest<AccountUsage>("/api/billing/usage", {
+    billingRequest<RegionalUsage>("/api/billing/usage", {
       signal: controller.signal,
     })
       .then((result) => {
@@ -204,10 +209,17 @@ export function BillingUsagePanel({
 
 export function BillingSettingsPanel({
   preview = false,
+  billing,
+  returnedFromCheckout = false,
 }: {
   preview?: boolean
+  billing: BillingUsageState
+  returnedFromCheckout?: boolean
 }) {
-  const { usage, loading, error, refresh } = useBillingUsage(!preview)
+  const { usage, loading, error, refresh } = billing
+  useEffect(() => {
+    if (!preview) refresh()
+  }, [preview, refresh])
   if (preview)
     return (
       <p className="text-sm text-muted-foreground">
@@ -227,6 +239,7 @@ export function BillingSettingsPanel({
     )
   return (
     <div className="flex flex-col gap-6">
+      {returnedFromCheckout && <CheckoutConfirmation billing={billing} />}
       {error && (
         <Alert variant="destructive">
           <AlertDescription className="flex flex-col items-start gap-2">
@@ -240,7 +253,7 @@ export function BillingSettingsPanel({
       )}
       {usage && (
         <>
-          <div className="flex items-center justify-between gap-4 border-b pb-4">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b pb-4">
             <div>
               <h2 className="text-sm font-medium">
                 {usage.plan === "paid" ? "Abstruck Pro" : "Free plan"}
@@ -249,21 +262,19 @@ export function BillingSettingsPanel({
                 {subscriptionSummary(usage)}
               </p>
             </div>
-            {usage.hasBillingAccount ? (
-              <BillingCheckout
-                action="portal"
-                disabled={!usage.checkoutAvailable || !!error}
-              />
-            ) : (
-              <Button
-                render={<Link href="/billing" />}
-                nativeButton={false}
-                variant="outline"
-                className="rounded-xl"
-              >
-                View plans
-              </Button>
-            )}
+            <div className="flex flex-wrap items-center gap-2">
+              {usage.hasBillingAccount && (
+                <BillingCheckout
+                  action="portal"
+                  disabled={!usage.checkoutAvailable || !!error}
+                />
+              )}
+              {usage.plan === "free" &&
+                !usage.subscription &&
+                !returnedFromCheckout && (
+                  <UpgradeDialog billing={billing} label="Upgrade to Pro" />
+                )}
+            </div>
           </div>
           <BillingUsagePanel usage={usage} compact />
         </>
@@ -275,11 +286,13 @@ export function BillingSettingsPanel({
 export function BillingPlanBadge({
   enabled,
   className,
+  billing,
 }: {
   enabled: boolean
   className?: string
+  billing: BillingUsageState
 }) {
-  const { usage, error } = useBillingUsage(enabled)
+  const { usage, error } = billing
   return (
     <Badge variant="outline" className={className}>
       {!enabled

@@ -4,6 +4,12 @@ import { createHmac, randomUUID } from "node:crypto"
 import { registerHooks } from "node:module"
 import process from "node:process"
 import test from "node:test"
+import {
+  billingPaths,
+  getBillingView,
+  getPricingCurrency,
+  monthlyPrices,
+} from "../lib/pricing.ts"
 
 // Exercise the actual routes, SDK and PostgREST client. Only the signed-in user
 // and network responses are fixtures. An unexpected request fails the test.
@@ -57,6 +63,32 @@ const post = (path, body) =>
     headers: { origin: app, "content-type": "application/json" },
     body: JSON.stringify(body),
   })
+
+test("the Pro price follows the request country", () => {
+  for (const [country, currency, price] of [
+    ["PH", "php", "₱199"],
+    ["US", "usd", "$6.99"],
+  ]) {
+    const selected = getPricingCurrency(
+      new Headers({ "x-vercel-ip-country": country })
+    )
+    assert.equal(selected, currency)
+    assert.equal(monthlyPrices[selected].pro, price)
+  }
+})
+
+test("workspace links open the intended billing view", () => {
+  for (const [view, path] of Object.entries(billingPaths)) {
+    const params = Object.fromEntries(new URL(path, app).searchParams)
+    assert.equal(getBillingView(params), view)
+  }
+  assert.equal(getBillingView({}), undefined)
+  assert.equal(getBillingView({ checkout: "success" }), undefined)
+  assert.equal(
+    getBillingView({ settings: "billing", upgrade: "pro" }),
+    "upgrade"
+  )
+})
 
 test("a checkout attaches the signed-in owner and uses the catalog's currency and product", async (t) => {
   for (const currency of ["usd", "php"]) {

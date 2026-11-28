@@ -36,7 +36,7 @@ import {
 } from "@workspace/ui/components/alert"
 import { Skeleton } from "@workspace/ui/components/skeleton"
 import { Spinner } from "@workspace/ui/components/spinner"
-import { BillingSettingsPanel } from "./billing-usage"
+import { BillingSettingsPanel, type BillingUsageState } from "./billing-usage"
 import {
   AccountDataControls,
   type AccountDataRequestIds,
@@ -57,6 +57,9 @@ export interface AccountDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   profile: AccountProfile
+  billing: BillingUsageState
+  initialTab?: "account" | "billing"
+  returnedFromCheckout?: boolean
   preview?: boolean
   saveProfileAction?: (formData: FormData) => Promise<AccountResult>
   requestExportAction?: () => Promise<AccountResult>
@@ -67,6 +70,9 @@ export function AccountDialog({
   open,
   onOpenChange,
   profile,
+  billing,
+  initialTab = "account",
+  returnedFromCheckout = false,
   preview = false,
   saveProfileAction,
   requestExportAction,
@@ -81,7 +87,7 @@ export function AccountDialog({
   const [message, setMessage] = useState("")
   const [editing, setEditing] = useState(false)
   const [completeProfile, setCompleteProfile] = useState(false)
-  const [tab, setTab] = useState("account")
+  const [tab, setTab] = useState<string>(initialTab)
   const [dataPending, setDataPending] = useState(false)
   const dataRequestIds = useRef<AccountDataRequestIds>({
     export: null,
@@ -183,7 +189,7 @@ export function AccountDialog({
     >
       <DialogContent
         showCloseButton={false}
-        className="flex h-[min(600px,calc(100svh-2rem))] w-[calc(100%-2rem)] max-w-3xl! flex-col gap-0 overflow-hidden rounded-[12px] p-0"
+        className="flex h-[min(600px,calc(100svh-2rem))] w-[calc(100%-2rem)] max-w-3xl! flex-col gap-0 overflow-hidden rounded-[12px] p-0 data-[nested-dialog-open]:brightness-75"
       >
         <DialogHeader className="sr-only">
           <DialogTitle>Settings</DialogTitle>
@@ -447,7 +453,11 @@ export function AccountDialog({
             </TabsContent>
             <TabsContent value="billing">
               <h2 className="sr-only">Plan &amp; Billing</h2>
-              <BillingSettingsPanel preview={preview} />
+              <BillingSettingsPanel
+                preview={preview}
+                billing={billing}
+                returnedFromCheckout={returnedFromCheckout}
+              />
             </TabsContent>
             <TabsContent value="data" keepMounted>
               <h2 className="mb-5 text-xl font-medium">Data controls</h2>

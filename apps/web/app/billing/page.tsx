@@ -1,14 +1,14 @@
-import { requireUser } from "@/lib/auth/session"
-import { BillingPage } from "@/components/workspace/billing-page"
+import { redirect } from "next/navigation"
+import { billingPaths, getBillingView } from "@/lib/pricing"
 
 export default async function BillingRoute({
   searchParams,
 }: {
-  searchParams: Promise<{ checkout?: string | string[] }>
+  searchParams: Promise<{
+    checkout?: string | string[]
+    upgrade?: string | string[]
+  }>
 }) {
-  const returnedFromCheckout = (await searchParams).checkout === "success"
-  await requireUser(
-    returnedFromCheckout ? "/billing?checkout=success" : "/billing"
-  )
-  return <BillingPage returnedFromCheckout={returnedFromCheckout} />
+  const view = getBillingView({ ...(await searchParams), settings: "billing" })
+  redirect(billingPaths[view ?? "settings"])
 }

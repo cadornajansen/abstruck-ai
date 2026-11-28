@@ -1,7 +1,7 @@
 import { ConnectedHome } from "@/components/connected-home"
 import { createSpace } from "@/app/actions/spaces"
 import { signOut } from "@/app/auth/actions"
-import { getCurrentUser } from "@/lib/auth/session"
+import { getCurrentUser, requireUser } from "@/lib/auth/session"
 import { getSpaces } from "@/lib/spaces"
 import { getProfile } from "@/lib/profile"
 import { getRecentMaterials } from "@/lib/library"
@@ -17,6 +17,7 @@ import { LandingContent } from "@/components/marketing/landing"
 import { marketingMetadata } from "@/components/marketing/metadata"
 import { WebsiteStructuredData } from "@/components/marketing/structured-data"
 import { SEARCH_DESCRIPTION, SEARCH_TITLE } from "@/lib/public-seo"
+import { billingPaths, getBillingView } from "@/lib/pricing"
 
 export async function generateMetadata() {
   if (
@@ -27,12 +28,21 @@ export async function generateMetadata() {
   return marketingMetadata(SEARCH_TITLE, SEARCH_DESCRIPTION, "/")
 }
 
-export default async function Page() {
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
+  const billingView = getBillingView(await searchParams)
   const productionHost = isProductionRelease()
     ? (await headers()).get("host")
     : null
   const user =
-    productionHost === MARKETING_HOSTNAME ? null : await getCurrentUser()
+    productionHost === MARKETING_HOSTNAME
+      ? null
+      : billingView
+        ? await requireUser(billingPaths[billingView])
+        : await getCurrentUser()
   if (!user) {
     if (productionHost === APP_HOSTNAME) redirect("/sign-in")
     return (
@@ -43,16 +53,18 @@ export default async function Page() {
     )
   }
   const profile = await getProfile(user.id)
-  if (!profile?.onboarding_completed_at) redirect("/onboarding")
+  if (!profile?.onboarding_completed_at && !billingView) redirect("/onboarding")
   const [spaces, recentMaterials] = await Promise.all([
     getSpaces(user.id),
     getRecentMaterials(user.id),
   ])
   return (
     <ConnectedHome
+      key={billingView ?? "workspace"}
+      initialBillingView={billingView}
       spaces={spaces}
       recentMaterials={recentMaterials}
-      userName={profile.display_name ?? undefined}
+      userName={profile?.display_name ?? undefined}
       createSpaceAction={createSpace}
       signOutAction={signOut}
     />

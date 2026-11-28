@@ -10,6 +10,7 @@ import {
 } from "react"
 import { motion, useReducedMotion } from "motion/react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import {
   ArrowUp,
   Clock,
@@ -88,7 +89,13 @@ import {
 
 import { Brand } from "@/components/workspace/brand"
 import { SearchDialog } from "@/components/workspace/search-dialog"
-import { BillingPlanBadge } from "@/components/workspace/billing-usage"
+import {
+  BillingPlanBadge,
+  useBillingUsage,
+  type BillingUsageState,
+} from "./billing-usage"
+import { UpgradeDialog } from "./upgrade-dialog"
+import type { BillingView } from "@/lib/pricing"
 import { SidebarSpaces } from "./sidebar-spaces"
 import type { SpaceFolder } from "@/lib/organisation-types"
 import { MaterialIcon } from "@/components/workspace/material-icon"
@@ -138,10 +145,14 @@ type WorkspaceAccountProps = {
   creatingSpace?: boolean
   createSpaceError?: string
   signOutAction?: () => Promise<void>
-  account?: Omit<AccountDialogProps, "open" | "onOpenChange">
+  account?: Omit<
+    AccountDialogProps,
+    "open" | "onOpenChange" | "billing" | "initialTab" | "returnedFromCheckout"
+  >
 }
 
 function WorkspaceNavigation({
+  billing,
   onNavigate,
   preview = false,
   spaces = [],
@@ -159,6 +170,7 @@ function WorkspaceNavigation({
   onCollapse,
   collapseButtonRef,
 }: WorkspaceAccountProps & {
+  billing: BillingUsageState
   onNavigate?: () => void
   preview?: boolean
   onSettings?: () => void
@@ -315,6 +327,7 @@ function WorkspaceNavigation({
       </SidebarContent>
       <SidebarFooter className="gap-0 pb-3">
         <BillingPlanBadge
+          billing={billing}
           enabled={!!signOutAction}
           className="mx-5 h-6 w-auto rounded-b-none border-plan-border bg-plan text-plan-foreground"
         />
@@ -360,19 +373,6 @@ function WorkspaceNavigation({
         )}
       </SidebarFooter>
     </>
-  )
-}
-
-function UpgradeButton({ preview = false }: { preview?: boolean }) {
-  return (
-    <Button
-      variant="outline"
-      render={<Link href={preview ? "/preview/billing" : "/billing"} />}
-      nativeButton={false}
-      className="h-10 rounded-full border-plan-border bg-plan px-3 text-plan-foreground"
-    >
-      Upgrade
-    </Button>
   )
 }
 
@@ -735,6 +735,7 @@ export function WorkspaceShell({
   account,
   fixedContent = false,
   defaultSearchOpen = false,
+  initialBillingView,
   sidePanel,
   sidePanelOpen = false,
   sidePanelExpanded = false,
@@ -746,13 +747,22 @@ export function WorkspaceShell({
   onAddMaterial?: () => void
   fixedContent?: boolean
   defaultSearchOpen?: boolean
+  initialBillingView?: BillingView
   sidePanel?: ReactNode
   sidePanelOpen?: boolean
   sidePanelExpanded?: boolean
 }) {
   const [navigationOpen, setNavigationOpen] = useState(false)
   const [desktopNavigationOpen, setDesktopNavigationOpen] = useState(true)
-  const [settingsOpen, setSettingsOpen] = useState(false)
+  const router = useRouter()
+  const openBillingSettings =
+    initialBillingView === "settings" ||
+    initialBillingView === "checkout-return"
+  const [settingsOpen, setSettingsOpen] = useState(openBillingSettings)
+  const billing = useBillingUsage(!preview && !!signOutAction)
+  function clearBillingView() {
+    if (initialBillingView) router.replace("/", { scroll: false })
+  }
   const [searchOpen, setSearchOpen] = useState(defaultSearchOpen)
   const reduceMotion = useReducedMotion()
   const expandNavigationButton = useRef<HTMLButtonElement | null>(null)
@@ -832,6 +842,7 @@ export function WorkspaceShell({
             className="flex h-full min-h-0 flex-col"
           >
             <WorkspaceNavigation
+              billing={billing}
               preview={preview}
               spaces={spaces}
               recentMaterials={recentMaterials}
@@ -945,6 +956,7 @@ export function WorkspaceShell({
                   className="flex h-full min-h-0 flex-col"
                 >
                   <WorkspaceNavigation
+                    billing={billing}
                     onNavigate={() => setNavigationOpen(false)}
                     preview={preview}
                     spaces={spaces}
@@ -972,7 +984,37 @@ export function WorkspaceShell({
             <div className="min-w-0 flex-1 truncate text-sm">{title}</div>
           )}
           <div className={fixedContent ? "hidden sm:block" : undefined}>
-            <UpgradeButton preview={preview} />
+            {preview || !signOutAction ? (
+              <Button
+                variant="outline"
+                render={
+                  <Link
+                    href={preview ? "/preview/billing" : "/billing?upgrade=pro"}
+                  />
+                }
+                nativeButton={false}
+                className="h-9 rounded-full px-4"
+              >
+                Upgrade
+              </Button>
+            ) : (billing.usage?.plan === "paid" ||
+                billing.usage?.subscription) &&
+              initialBillingView !== "upgrade" ? (
+              <Button
+                variant="outline"
+                render={<Link href="/billing" />}
+                nativeButton={false}
+                className="h-9 rounded-full px-4"
+              >
+                Plan &amp; Billing
+              </Button>
+            ) : (
+              <UpgradeDialog
+                billing={billing}
+                initiallyOpen={initialBillingView === "upgrade"}
+                onDismiss={clearBillingView}
+              />
+            )}
           </div>
           {actions}
         </header>
@@ -1015,7 +1057,13 @@ export function WorkspaceShell({
       {signOutAction && (
         <AccountDialog
           open={settingsOpen}
-          onOpenChange={setSettingsOpen}
+          onOpenChange={(open) => {
+            setSettingsOpen(open)
+            if (!open) clearBillingView()
+          }}
+          initialTab={openBillingSettings ? "billing" : "account"}
+          returnedFromCheckout={initialBillingView === "checkout-return"}
+          billing={billing}
           profile={{ name: userName || "Your workspace" }}
           preview={preview}
           {...account}
@@ -1027,6 +1075,7 @@ export function WorkspaceShell({
 }
 
 export function StudyHome({
+  initialBillingView,
   spaces = [],
   recentMaterials = [],
   userName,
@@ -1035,6 +1084,7 @@ export function StudyHome({
   onSubmitMaterial,
   onStartChat,
 }: {
+  initialBillingView?: BillingView
   spaces?: StudySpace[]
   recentMaterials?: RecentMaterial[]
   userName?: string
@@ -1050,6 +1100,7 @@ export function StudyHome({
     : undefined
   return (
     <WorkspaceShell
+      initialBillingView={initialBillingView}
       spaces={spaces}
       recentMaterials={recentMaterials}
       userName={userName}
