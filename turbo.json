@@ -20,7 +20,11 @@
       "dependsOn": ["^typecheck"]
     },
     "dev": {
-      "passThroughEnv": ["LOCAL_PRICING_COUNTRY", "LOCAL_POLAR_SANDBOX_PORT"],
+      "passThroughEnv": [
+        "LOCAL_PRICING_COUNTRY",
+        "LOCAL_POLAR_SANDBOX_PORT",
+        "LOCAL_BILLING_TEST_LOGIN_PORT"
+      ],
       "cache": false,
       "persistent": true
     }

@@ -1,5 +1,5 @@
 import { signInWithGoogle, signUp } from "@/app/auth/actions"
-import { AuthScreen } from "@/components/auth/auth-screen"
+import { AccountEntry } from "@/components/auth/account-entry"
 import { safeNextPath } from "@/lib/auth/redirect"
 
 export default async function SignUpPage({
@@ -9,7 +9,7 @@ export default async function SignUpPage({
 }) {
   const params = await searchParams
   return (
-    <AuthScreen
+    <AccountEntry
       mode="sign-up"
       action={signUp}
       googleAction={signInWithGoogle}
