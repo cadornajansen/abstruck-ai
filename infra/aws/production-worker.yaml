@@ -148,8 +148,8 @@ Resources:
             - {Name: SUPABASE_URL, Value: 'https://qgdbftgqiinydeeiwadg.supabase.co'}
             - {Name: R2_ACCOUNT_ID, Value: !Ref R2AccountId}
             - {Name: R2_BUCKET, Value: !Ref R2BucketName}
-            - {Name: NEXT_PUBLIC_APP_URL, Value: 'https://app.abstruck.space'}
-            - {Name: ASSEMBLYAI_WEBHOOK_URL, Value: 'https://app.abstruck.space/api/webhooks/assemblyai'}
+            - {Name: NEXT_PUBLIC_APP_URL, Value: 'https://app.abstruck.com'}
+            - {Name: ASSEMBLYAI_WEBHOOK_URL, Value: 'https://app.abstruck.com/api/webhooks/assemblyai'}
             - {Name: OPENAI_EMBEDDINGS_ENABLED, Value: 'false'}
             - {Name: MAINTENANCE_NOTIFICATIONS_ENABLED, Value: 'false'}
           Secrets:

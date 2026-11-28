@@ -3,8 +3,8 @@ import { get } from "node:http"
 import { argv } from "node:process"
 import { Buffer } from "node:buffer"
 
-const marketing = "https://www.abstruck.space"
-const workspace = "https://app.abstruck.space"
+const marketing = "https://www.abstruck.com"
+const workspace = "https://app.abstruck.com"
 const localOrigin = argv[2]
 const expectedBlogCount = 13
 const requiredPublicPaths = [
@@ -177,7 +177,7 @@ for (const path of articlePaths)
   assert.ok(llmsText.includes(`(${marketing}${path})`), path)
 assert.doesNotMatch(
   llmsText,
-  /stripe-alternatives|mdx-rendering-test|app\.abstruck\.space/
+  /stripe-alternatives|mdx-rendering-test|app\.abstruck\.com|abstruck\.space/i
 )
 
 await assertRedirect(marketing, "/landing", marketing + "/")
@@ -189,8 +189,18 @@ await assertRedirect(
 )
 await assertRedirect(workspace, "/features", marketing + "/features")
 await assertRedirect(workspace, "/sitemap.xml", marketing + "/sitemap.xml")
-if (!localOrigin)
-  await assertRedirect("https://abstruck.space", "/", marketing + "/")
+if (!localOrigin) {
+  const article = articlePaths[0] + "?from=archive"
+  for (const origin of [
+    "https://abstruck.com",
+    "https://abstruck.space",
+    "https://www.abstruck.space",
+  ]) {
+    await assertRedirect(origin, article, marketing + article)
+  }
+  const signIn = "/sign-in?next=%2Flibrary"
+  await assertRedirect("https://app.abstruck.space", signIn, workspace + signIn)
+}
 
 for (const path of [
   "/blog/stripe-alternatives-for-saas",

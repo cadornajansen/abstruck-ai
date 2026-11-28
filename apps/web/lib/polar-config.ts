@@ -1,6 +1,6 @@
 import "server-only"
 
-import { APP_ORIGIN } from "@/lib/release"
+import { APP_ORIGIN, getAppOrigin } from "@/lib/release"
 
 export const polarUuid = /^[\da-f]{8}-(?:[\da-f]{4}-){3}[\da-f]{12}$/i
 
@@ -24,8 +24,7 @@ function readConfig() {
     return null
 
   const app = new URL(
-    process.env.NEXT_PUBLIC_APP_URL ||
-      (environment === "production" ? APP_ORIGIN : "http://localhost:3000")
+    getAppOrigin(environment === "production" ? APP_ORIGIN : undefined)
   )
   if (
     app.username ||

@@ -6,6 +6,7 @@ import type { AuthError } from "@supabase/supabase-js"
 import { safeNextPath } from "@/lib/auth/redirect"
 import { ensureProfile, requireUser } from "@/lib/auth/session"
 import { authSchemas } from "@/lib/auth/validation"
+import { getAppOrigin } from "@/lib/release"
 import { createClient } from "@/lib/supabase/server"
 
 export type AuthFeedback = {
@@ -70,8 +71,7 @@ function credentials(formData: FormData): {
 }
 
 function callbackUrl(next: string): string {
-  const origin = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
-  const url = new URL("/auth/callback", origin)
+  const url = new URL("/auth/callback", getAppOrigin())
   url.searchParams.set("next", safeNextPath(next))
   return url.toString()
 }

@@ -1,6 +1,7 @@
 import "server-only"
 
 import { createHash, createHmac, timingSafeEqual } from "node:crypto"
+import { getAppOrigin } from "@/lib/release"
 import type {
   ShareMetadata,
   SharePreview,
@@ -108,9 +109,7 @@ export function shareBearer(request: Request): string {
 }
 
 function shareUrl(token: string): string {
-  const origin = new URL(
-    process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
-  )
+  const origin = new URL(getAppOrigin())
   if (
     !["http:", "https:"].includes(origin.protocol) ||
     origin.username ||
