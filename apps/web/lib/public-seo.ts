@@ -14,7 +14,7 @@ export const INDEXED_MARKETING_PATHS: ReadonlySet<string> = new Set([
 export const SEARCH_TITLE = "Abstruck AI"
 export const SEARCH_DESCRIPTION =
   "Turn class materials into notes, cited answers, and practice."
-export const SEARCH_IMAGE = "/abstruck-ai-og.png"
+export const SEARCH_IMAGE = "/abstruck-ai-f6s.png"
 
 export function publicUrl(path: string): string {
   return new URL(path, MARKETING_ORIGIN).href
