@@ -63,6 +63,42 @@
   --shadow-composer: 0 4px 10px rgb(0 0 0 / 0.04);
 }
 
+@theme {
+  --shadow-surface: 0 2px 8px rgb(24 28 35 / 5%), 0 14px 40px -16px rgb(24 28 35 / 16%);
+  --shadow-paper: 0 1px 5px rgb(24 28 35 / 7%), 0 8px 24px -9px rgb(24 28 35 / 18%);
+  --animate-file-drop: file-drop 3.4s cubic-bezier(.32, 0, .18, 1) both;
+  --animate-drop-prompt: drop-prompt 3.4s ease both;
+  --animate-drop-receipt: drop-receipt 3.4s ease both;
+  --animate-flashcard-turn: flashcard-turn 1.2s ease-in-out;
+  --animate-paper-fan: paper-fan .45s ease-out;
+  --animate-source-highlight: source-highlight .65s ease-out;
+
+  @keyframes file-drop {
+    0%, 20% { transform: none; }
+    28% { transform: translateY(-5px) scale(1.015); }
+    52%, 100% { transform: translateY(var(--drop-distance)) scale(.8); }
+  }
+  @keyframes drop-prompt {
+    0%, 27% { opacity: 1; }
+    39%, 100% { opacity: 0; }
+  }
+  @keyframes drop-receipt {
+    0%, 48% { opacity: 0; }
+    62%, 100% { opacity: 1; }
+  }
+  @keyframes flashcard-turn {
+    0%, 42% { transform: rotateY(0deg); }
+    100% { transform: rotateY(180deg); }
+  }
+  @keyframes paper-fan {
+    from { translate: 0; rotate: 0deg; }
+  }
+  @keyframes source-highlight {
+    from { background-size: 0% 100%; }
+    to { background-size: 100% 100%; }
+  }
+}
+
 :root {
   color-scheme: light;
   --plan: #f6fbf8;

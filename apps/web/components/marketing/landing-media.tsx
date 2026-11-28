@@ -1,15 +1,7 @@
 import Image from "next/image"
-import Link from "next/link"
-import { ArrowRight } from "iconoir-react"
-import { Card, CardHeader, CardTitle } from "@workspace/ui/components/card"
+export { LandingFeaturePreviews } from "./feature-showcase"
 
 const demoPath = "/landing/demo"
-
-const previews = [
-  ["Materials", "/features#materials", "organized-materials.webp"],
-  ["Cited answers", "/features#understand", "cited-answer.webp"],
-  ["Flashcards", "/features#practise", "flashcards.webp"],
-] as const
 
 const universities = [
   ["up", "University of the Philippines"],
@@ -76,44 +68,6 @@ export function UniversityCommunity() {
           </li>
         ))}
       </ul>
-    </section>
-  )
-}
-
-export function LandingFeaturePreviews() {
-  return (
-    <section
-      id="study-tools"
-      aria-label="Study tools"
-      className="mx-auto grid max-w-6xl scroll-mt-28 gap-4 px-5 sm:px-8 md:grid-cols-3"
-    >
-      {previews.map(([label, href, image]) => (
-        <Link
-          key={href}
-          href={href}
-          className="group block rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
-        >
-          <Card className="h-full gap-0 rounded-2xl py-0 ring-border/80">
-            <div className="aspect-[16/10] overflow-hidden border-b border-border/60 bg-muted/35">
-              <Image
-                src={`${demoPath}/${image}`}
-                alt=""
-                width={960}
-                height={600}
-                unoptimized
-                className="block h-full w-full object-cover"
-              />
-            </div>
-            <CardHeader className="flex items-center justify-between py-3.5">
-              <CardTitle>{label}</CardTitle>
-              <ArrowRight
-                aria-hidden="true"
-                className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 motion-reduce:transform-none motion-reduce:transition-none"
-              />
-            </CardHeader>
-          </Card>
-        </Link>
-      ))}
     </section>
   )
 }
