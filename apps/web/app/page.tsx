@@ -25,7 +25,12 @@ export async function generateMetadata() {
     (await headers()).get("host") !== MARKETING_HOSTNAME
   )
     return { title: "Abstruck — Your study workspace" }
-  return marketingMetadata(SEARCH_TITLE, SEARCH_DESCRIPTION, "/")
+  return {
+    ...marketingMetadata(SEARCH_TITLE, SEARCH_DESCRIPTION, "/"),
+    verification: {
+      other: { "msvalidate.01": "143149D9E33C6CAD06BFD2B784CE039A" },
+    },
+  }
 }
 
 export default async function Page({
