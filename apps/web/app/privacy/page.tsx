@@ -15,7 +15,7 @@ export default function PrivacyPage() {
     <PublicPage
       active="privacy"
       title="Privacy notice"
-      description="How Abstruck handles workspace and billing data. Updated November 27, 2026."
+      description="How Abstruck handles workspace, billing and website usage data. Updated November 28, 2026."
     >
       <div className="flex max-w-3xl flex-col gap-8">
         <PublicSection title="Data used by your workspace">
@@ -32,6 +32,11 @@ export default function PrivacyPage() {
             records billing identifiers, status and period dates. Authentication
             uses cookies, and the interface stores some local display
             preferences, such as the selected list or grid view.
+          </p>
+          <p>
+            We use Vercel Web Analytics to count visitors and page views. We
+            remove query strings, link fragments and private workspace item IDs
+            from the page URLs we send.
           </p>
         </PublicSection>
         <PublicSection title="Processing and service providers">

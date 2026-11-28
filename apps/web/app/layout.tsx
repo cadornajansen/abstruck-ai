@@ -5,6 +5,7 @@ import "@workspace/ui/globals.css"
 import "pdfjs-dist/web/pdf_viewer.css"
 import "katex/dist/katex.min.css"
 import { cn } from "@workspace/ui/lib/utils"
+import { WebAnalytics } from "@/components/web-analytics"
 
 const geist = Geist({
   subsets: ["latin"],
@@ -34,7 +35,10 @@ export default function RootLayout({
         inter.variable
       )}
     >
-      <body>{children}</body>
+      <body>
+        {children}
+        <WebAnalytics />
+      </body>
     </html>
   )
 }
