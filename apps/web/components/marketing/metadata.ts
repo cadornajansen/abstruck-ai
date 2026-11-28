@@ -19,7 +19,7 @@ export function marketingMetadata(
     (INDEXED_MARKETING_PATHS.has(path) || Boolean(article))
   const image = publicUrl(article?.image ?? SEARCH_IMAGE)
   return {
-    title: `${title} · Abstruck`,
+    title: path === "/" ? title : `${title} · Abstruck`,
     description,
     alternates: {
       canonical: url,
